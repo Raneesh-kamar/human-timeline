@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Human Timeline</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32'%3E%3Cdefs%3E%3CradialGradient id='bg' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%230d0d22'/%3E%3Cstop offset='100%25' stop-color='%2308081a'/%3E%3C/radialGradient%3E%3CradialGradient id='glow' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23d966ff' stop-opacity='0.9'/%3E%3Cstop offset='100%25' stop-color='%23d966ff' stop-opacity='0'/%3E%3C/radialGradient%3E%3Cfilter id='blur1' x='-50%25' y='-50%25' width='200%25' height='200%25'%3E%3CfeGaussianBlur stdDeviation='1.5'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='32' height='32' rx='6' fill='url(%23bg)'/%3E%3Ccircle cx='5' cy='5' r='0.6' fill='%23ffffff' opacity='0.6'/%3E%3Ccircle cx='28' cy='4' r='0.4' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='26' cy='10' r='0.5' fill='%2300d4ff' opacity='0.5'/%3E%3Ccircle cx='3' cy='14' r='0.4' fill='%23ffffff' opacity='0.4'/%3E%3Ccircle cx='29' cy='20' r='0.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='7' cy='26' r='0.4' fill='%233dff7a' opacity='0.4'/%3E%3Ccircle cx='23' cy='27' r='0.6' fill='%23ffffff' opacity='0.3'/%3E%3Ccircle cx='14' cy='3' r='0.4' fill='%23ffffff' opacity='0.4'/%3E%3Cline x1='4' y1='18' x2='28' y2='18' stroke='rgba(255,255,255,0.2)' stroke-width='1'/%3E%3Ccircle cx='8' cy='18' r='1.8' fill='%2308081a' stroke='%2300d4ff' stroke-width='1.2' opacity='0.8'/%3E%3Ccircle cx='16' cy='18' r='2.2' fill='%2308081a' stroke='%23ffaa00' stroke-width='1.4' opacity='0.9'/%3E%3Ccircle cx='24' cy='18' r='1.8' fill='%2308081a' stroke='%233dff7a' stroke-width='1.2' opacity='0.8'/%3E%3Ccircle cx='16' cy='18' r='5' fill='url(%23glow)' filter='url(%23blur1)'/%3E%3Ccircle cx='16' cy='18' r='3.5' fill='rgba(217,102,255,0.18)'/%3E%3Ccircle cx='16' cy='18' r='2.2' fill='%2308081a' stroke='%23d966ff' stroke-width='1.8'/%3E%3Ccircle cx='16' cy='18' r='0.9' fill='%23d966ff' opacity='0.95'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #08081a; --bg2: #0d0d22; --surface: #1a1a35;
+  --border: rgba(255,255,255,0.09); --border2: rgba(255,255,255,0.18);
+  --text: #f0ecdf; --text2: #a89fbc; --text3: #5a5278;
+  --climate: #00d4ff; --biology: #3dff7a; --society: #ffaa00; --tech: #d966ff;
+  --climate-dim: rgba(0,212,255,0.15); --biology-dim: rgba(61,255,122,0.15);
+  --society-dim: rgba(255,170,0,0.15); --tech-dim: rgba(217,102,255,0.15);
+  --climate-glow: rgba(0,212,255,0.75); --biology-glow: rgba(61,255,122,0.75);
+  --society-glow: rgba(255,170,0,0.75); --tech-glow: rgba(217,102,255,0.75);
+  --track-h: 90px; --track-gap: 12px; --ruler-h: 80px;
+  --scrubber-h: 60px; --header-h: 60px;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-mono: 'DM Mono', monospace; --font-body: 'DM Sans', sans-serif;
+}
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+/* ── STARFIELD ── */
+#starfield { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.star-layer { position: absolute; inset: 0; }
+
+
+
+/* ── APP ── */
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; z-index: 1; }
+
+/* ── HEADER ── */
+#header { height: var(--header-h); padding: 0 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: rgba(7,7,15,0.92); backdrop-filter: blur(8px); flex-shrink: 0; z-index: 20; gap: 0.75rem; }
+#header-title { font-family: var(--font-display); font-size: 0.95rem; font-style: italic; color: var(--text2); font-weight: 400; white-space: nowrap; }
+.header-right { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.ctrl-btn { padding: 0.35rem 0.85rem; background: transparent; border: 1px solid var(--border); color: var(--text2); font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.22s; border-radius: 2px; white-space: nowrap; }
+.ctrl-btn:hover { border-color: var(--border2); color: var(--text); }
+.ctrl-btn.active { border-color: var(--tech); color: var(--tech); background: var(--tech-dim); }
+.ctrl-btn.play-active { border-color: var(--society); color: var(--society); background: var(--society-dim); }
+.legend { display: flex; gap: 0.75rem; align-items: center; }
+.legend-item { display: flex; align-items: center; gap: 0.35rem; font-family: var(--font-mono); font-size: 0.55rem; letter-spacing: 0.06em; color: var(--text3); text-transform: uppercase; }
+.legend-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+/* ── SEARCH ── */
+#search-bar { position: fixed; top: var(--header-h); left: 80px; right: 0; z-index: 19; padding: 0.6rem 1rem; background: rgba(7,7,15,0.97); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); display: none; gap: 0.5rem; align-items: center; }
+#search-bar.open { display: flex; }
+#search-input { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: var(--font-mono); font-size: 0.75rem; padding: 0.4rem 0.75rem; outline: none; transition: border-color 0.2s; }
+#search-input:focus { border-color: var(--border2); }
+#search-input::placeholder { color: var(--text3); }
+#search-results { position: absolute; top: 100%; left: 1rem; right: 1rem; background: var(--bg2); border: 1px solid var(--border); max-height: 240px; overflow-y: auto; z-index: 30; }
+.sri { padding: 0.5rem 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.6rem; transition: background 0.15s; }
+.sri:hover { background: var(--surface); }
+.sri-track { font-family: var(--font-mono); font-size: 0.52rem; letter-spacing: 0.06em; text-transform: uppercase; width: 58px; flex-shrink: 0; }
+.sri-title { font-size: 0.78rem; color: var(--text); }
+.sri-date { font-family: var(--font-mono); font-size: 0.52rem; color: var(--text3); margin-left: auto; white-space: nowrap; }
+
+/* ── TRACK LABELS ── */
+#track-labels { position: absolute; left: 0; top: var(--header-h); width: 80px; display: flex; flex-direction: column; gap: var(--track-gap); padding-top: var(--ruler-h); z-index: 9; background: rgba(7,7,15,0.9); border-right: 1px solid var(--border); backdrop-filter: blur(4px); }
+.track-label { height: var(--track-h); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.track-label span { font-family: var(--font-mono); font-size: 0.52rem; letter-spacing: 0.14em; text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); }
+
+/* ── VIEWPORT ── */
+#viewport { flex: 1; overflow: hidden; position: relative; margin-left: 80px; }
+#canvas-wrap { width: 100%; height: 100%; overflow-x: scroll; overflow-y: hidden; cursor: grab; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+#canvas-wrap::-webkit-scrollbar { display: none; }
+#canvas-wrap.grabbing { cursor: grabbing; }
+#canvas { width: 15000px; height: 100%; position: relative; }
+
+/* ── RULER ── */
+#ruler { position: sticky; top: 0; height: var(--ruler-h); width: 15000px; z-index: 8; background: rgba(7,7,15,0.94); backdrop-filter: blur(4px); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; }
+#ruler-era-band { display: flex; height: 28px; border-bottom: 1px solid var(--border); }
+.era-ruler-seg { height: 100%; width: 3000px; display: flex; align-items: center; padding: 0 1rem; border-right: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; gap: 0.6rem; position: relative; }
+.era-ruler-label { font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
+.era-ruler-date { font-family: var(--font-mono); font-size: 0.5rem; opacity: 0.5; margin-left: auto; padding-right: 0.25rem; }
+#ruler-tick-band { display: flex; height: 52px; position: relative; }
+.era-tick-seg { height: 100%; width: 3000px; flex-shrink: 0; position: relative; border-right: 1px solid rgba(255,255,255,0.06); overflow: visible; }
+.ruler-tick { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; }
+.ruler-tick-line { width: 1px; background: rgba(255,255,255,0.22); }
+.ruler-tick-line.major { background: rgba(255,255,255,0.4); }
+.ruler-tick-label { font-family: var(--font-mono); font-size: 0.44rem; letter-spacing: 0.04em; color: var(--text3); white-space: nowrap; position: absolute; bottom: 100%; margin-bottom: 3px; transform: translateX(-50%); }
+
+/* ── ERA BACKGROUNDS ── */
+.era-bg { position: absolute; top: var(--ruler-h); bottom: 0; width: 3000px; border-right: 1px solid var(--border); }
+.era-bg-label { position: absolute; top: 0.6rem; left: 1.25rem; font-family: var(--font-display); font-size: 1.5rem; font-style: italic; font-weight: 400; opacity: 0.7; pointer-events: none; white-space: nowrap; }
+
+/* ── CONNECTORS ── */
+#connector-svg { position: absolute; top: 0; left: 0; width: 15000px; pointer-events: none; z-index: 3; }
+.connector-hidden { opacity: 0.6; transition: opacity 0.3s, filter 0.3s; }
+.connector-hidden.visible { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }
+.connector-hidden.dimmed { opacity: 0.08; }
+@keyframes flowDash { to { stroke-dashoffset: -20; } }
+
+/* ── TRACKS ── */
+#tracks { position: absolute; top: var(--ruler-h); left: 0; right: 0; display: flex; flex-direction: column; gap: var(--track-gap); padding: 1.5rem 0; }
+.track { height: var(--track-h); position: relative; flex-shrink: 0; }
+.track-line { position: absolute; top: 50%; transform: translateY(-50%); left: 0; right: 0; height: 1px; }
+#track-climate .track-line  { background: rgba(0,212,255,0.28); box-shadow: 0 0 4px rgba(0,212,255,0.15); }
+#track-biology .track-line  { background: rgba(61,255,122,0.28); box-shadow: 0 0 4px rgba(61,255,122,0.15); }
+#track-society .track-line  { background: rgba(255,170,0,0.28);  box-shadow: 0 0 4px rgba(255,170,0,0.15); }
+#track-tech    .track-line  { background: rgba(217,102,255,0.28); box-shadow: 0 0 4px rgba(217,102,255,0.15); }
+
+/* ── NODES ── */
+.node { position: absolute; top: 50%; transform: translate(-50%,-50%); cursor: pointer; z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.node-dot { border-radius: 50%; transition: transform 0.2s, box-shadow 0.2s; position: relative; flex-shrink: 0; }
+.node-dot.standard { width: 10px; height: 10px; border: 1.5px solid; background: var(--bg); }
+.node-dot.turning { width: 16px; height: 16px; border: 2px solid; }
+.node:hover .node-dot { transform: scale(1.5); }
+@keyframes nodePulse { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
+.node.turning .node-dot { animation: nodePulse 3s ease-in-out infinite; }
+.node-label { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.04em; color: var(--text2); text-align: center; max-width: 90px; line-height: 1.3; pointer-events: none; white-space: normal; overflow: visible; word-break: break-word; text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
+.node.turning .node-label { color: var(--text); font-size: 0.68rem; text-shadow: 0 1px 6px rgba(0,0,0,1); }
+.node.spotlight .node-dot { transform: scale(2) !important; animation: none !important; }
+.node.spotlight .node-label { color: var(--text) !important; font-weight: 500; }
+.node.dimmed { opacity: 0.18; transition: opacity 0.4s; }
+.node.climate .node-dot { border-color: var(--climate); }
+.node.climate .node-dot.turning { background: var(--climate-dim); box-shadow: 0 0 18px var(--climate-glow), 0 0 6px var(--climate-glow); }
+.node.biology .node-dot { border-color: var(--biology); }
+.node.biology .node-dot.turning { background: var(--biology-dim); box-shadow: 0 0 18px var(--biology-glow), 0 0 6px var(--biology-glow); }
+.node.society .node-dot { border-color: var(--society); }
+.node.society .node-dot.turning { background: var(--society-dim); box-shadow: 0 0 18px var(--society-glow), 0 0 6px var(--society-glow); }
+.node.tech .node-dot { border-color: var(--tech); }
+.node.tech .node-dot.turning { background: var(--tech-dim); box-shadow: 0 0 18px var(--tech-glow), 0 0 6px var(--tech-glow); }
+
+/* ── PANEL ── */
+#panel { position: fixed; bottom: var(--scrubber-h); left: 80px; right: 0; background: rgba(10,10,20,0.97); backdrop-filter: blur(12px); border-top: 1px solid var(--border2); border-left: 1px solid var(--border); transform: translateY(100%); transition: transform 0.38s cubic-bezier(0.16,1,0.3,1); z-index: 20; max-height: 265px; display: flex; flex-direction: column; }
+#panel.open { transform: translateY(0); }
+#panel-header { padding: 0.85rem 1.25rem 0.65rem; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--border); gap: 1rem; }
+#panel-title-group { flex: 1; }
+#panel-date { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em; margin-bottom: 0.25rem; }
+#panel-title { font-family: var(--font-display); font-size: 1.2rem; font-weight: 400; line-height: 1.2; }
+#panel-close { background: none; border: 1px solid var(--border); color: var(--text2); width: 26px; height: 26px; cursor: pointer; font-size: 1rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+#panel-close:hover { border-color: var(--border2); color: var(--text); }
+#panel-body { padding: 0.85rem 1.25rem; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; flex: 1; }
+.panel-section h4 { font-family: var(--font-mono); font-size: 0.52rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.35rem; font-weight: 400; }
+.panel-section p { font-size: 0.78rem; line-height: 1.65; color: var(--text2); font-weight: 300; }
+.panel-links { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem; }
+.panel-link { font-family: var(--font-mono); font-size: 0.58rem; padding: 0.18rem 0.55rem; border: 1px solid var(--border); cursor: pointer; border-radius: 2px; transition: all 0.2s; color: var(--text2); }
+.panel-link:hover { border-color: var(--border2); color: var(--text); }
+
+/* ── PLAY CARD ── */
+#play-card { position: fixed; top: calc(var(--header-h) + 1rem); right: 1.25rem; width: 275px; z-index: 25; background: rgba(10,10,20,0.96); backdrop-filter: blur(14px); border: 1px solid var(--border2); padding: 1rem 1.2rem; transform: translateX(310px); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); pointer-events: none; }
+#play-card.visible { transform: translateX(0); pointer-events: auto; }
+#play-card-step { font-family: var(--font-mono); font-size: 0.52rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.4rem; }
+#play-card-date { font-family: var(--font-mono); font-size: 0.62rem; margin-bottom: 0.25rem; }
+#play-card-title { font-family: var(--font-display); font-size: 1.05rem; font-weight: 400; line-height: 1.2; margin-bottom: 0.55rem; }
+#play-card-text { font-size: 0.73rem; line-height: 1.65; color: var(--text2); font-weight: 300; }
+#play-progress-bar { width: 100%; height: 2px; background: var(--surface); margin-top: 0.7rem; border-radius: 1px; overflow: hidden; }
+#play-progress-fill { height: 100%; background: var(--society); transition: width 0.5s ease; border-radius: 1px; }
+#play-card-nav { display: flex; gap: 0.4rem; margin-top: 0.65rem; }
+.play-nav-btn { flex: 1; padding: 0.32rem 0; background: transparent; border: 1px solid var(--border); color: var(--text2); font-family: var(--font-mono); font-size: 0.55rem; cursor: pointer; transition: all 0.2s; }
+.play-nav-btn:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
+.play-nav-btn:disabled { opacity: 0.28; cursor: default; }
+
+/* ── SCRUBBER ── */
+#scrubber-bar { height: var(--scrubber-h); background: rgba(7,7,15,0.95); border-top: 1px solid var(--border); display: flex; align-items: center; flex-shrink: 0; z-index: 10; }
+#era-jumps { display: flex; height: 100%; flex-shrink: 0; border-right: 1px solid var(--border); padding-left: 80px; }
+.era-jump-btn { height: 100%; padding: 0 0.9rem; background: transparent; border: none; border-right: 1px solid var(--border); color: var(--text3); font-family: var(--font-mono); font-size: 0.52rem; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; }
+.era-jump-btn:hover { color: var(--text); background: var(--surface); }
+.era-jump-btn.current { color: var(--text); background: rgba(255,255,255,0.04); }
+#scrubber-right { flex: 1; display: flex; align-items: center; gap: 0.75rem; padding: 0 1rem; }
+#current-date-label { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text2); min-width: 130px; letter-spacing: 0.04em; flex-shrink: 0; }
+#scrubber-track { flex: 1; height: 3px; background: var(--surface); border-radius: 2px; position: relative; cursor: pointer; }
+#scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%,-50%); width: 11px; height: 11px; background: var(--text); border-radius: 50%; cursor: grab; }
+#scrubber-progress { position: absolute; left: 0; top: 0; height: 100%; background: var(--border2); border-radius: 2px; pointer-events: none; }
+#zoom-controls { display: flex; align-items: center; gap: 0; flex-shrink: 0; border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.zoom-btn { width: 28px; height: 28px; background: transparent; border: none; color: var(--text2); font-size: 1rem; line-height: 1; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); }
+.zoom-btn:hover { background: var(--surface); color: var(--text); }
+.zoom-btn:disabled { opacity: 0.25; cursor: default; }
+#zoom-level { font-family: var(--font-mono); font-size: 0.52rem; color: var(--text3); letter-spacing: 0.06em; min-width: 32px; text-align: center; border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding: 0 4px; height: 28px; display: flex; align-items: center; justify-content: center; }
+
+/* ── TRUE SCALE ── */
+
+
+@media (max-width: 640px) {
+  :root { --track-h: 68px; --ruler-h: 34px; --header-h: 52px; }
+  #panel-body { grid-template-columns: 1fr; }
+  #track-labels { width: 44px; } #viewport { margin-left: 44px; }
+  #panel { left: 44px; } #era-jumps { padding-left: 44px; }
+  .legend { display: none; } #play-card { width: 220px; right: 0.5rem; }
+  .era-jump-btn { padding: 0 0.5rem; font-size: 0.44rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="starfield">
+  <canvas id="sc-far" class="star-layer"></canvas>
+  <canvas id="sc-mid" class="star-layer"></canvas>
+  <canvas id="sc-near" class="star-layer"></canvas>
+</div>
+
+<div id="app">
+  <div id="header">
+    <div id="header-title">Human Timeline</div>
+    <div class="header-right">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--climate)"></div>Climate</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--biology)"></div>Biology</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--society)"></div>Society</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tech)"></div>Technology</div>
+      </div>
+      <button class="ctrl-btn" id="search-btn">Search</button>
+      <button class="ctrl-btn" id="play-btn">▶ Play</button>
+    </div>
+  </div>
+
+  <div id="search-bar">
+    <input id="search-input" type="text" placeholder="Search events… e.g. fire, agriculture, AI" autocomplete="off">
+    <div id="search-results"></div>
+  </div>
+
+  <div id="track-labels">
+    <div class="track-label"><span style="color:var(--climate)">Climate</span></div>
+    <div class="track-label"><span style="color:var(--biology)">Biology</span></div>
+    <div class="track-label"><span style="color:var(--society)">Society</span></div>
+    <div class="track-label"><span style="color:var(--tech)">Technology</span></div>
+  </div>
+
+  <div id="viewport">
+    <div id="canvas-wrap">
+      <div id="canvas">
+        <div id="ruler">
+          <div id="ruler-era-band">
+            <div class="era-ruler-seg" style="background:rgba(255,183,77,0.12)"><span class="era-ruler-label" style="color:var(--society)">● Deep Background</span><span class="era-ruler-date">65M → 7M yrs ago</span></div>
+            <div class="era-ruler-seg" style="background:rgba(129,199,132,0.12)"><span class="era-ruler-label" style="color:var(--biology)">● Human Evolution</span><span class="era-ruler-date">7M → 300K yrs ago</span></div>
+            <div class="era-ruler-seg" style="background:rgba(79,195,247,0.12)"><span class="era-ruler-label" style="color:var(--climate)">● Cognitive Emergence</span><span class="era-ruler-date">300K → 10K yrs ago</span></div>
+            <div class="era-ruler-seg" style="background:rgba(255,120,80,0.12)"><span class="era-ruler-label" style="color:#ff7840">● Civilization</span><span class="era-ruler-date">10K yrs ago → 1500 CE</span></div>
+            <div class="era-ruler-seg" style="background:rgba(206,147,216,0.12)"><span class="era-ruler-label" style="color:var(--tech)">● Modern Era</span><span class="era-ruler-date">1500 CE → Present</span></div>
+          </div>
+          <div id="ruler-tick-band">
+            <div class="era-tick-seg" id="ticks-era1"></div>
+            <div class="era-tick-seg" id="ticks-era2"></div>
+            <div class="era-tick-seg" id="ticks-era3"></div>
+            <div class="era-tick-seg" id="ticks-era4"></div>
+            <div class="era-tick-seg" id="ticks-era5"></div>
+          </div>
+        </div>
+        <div class="era-bg" style="left:0;background:linear-gradient(90deg,rgba(255,170,0,0.18),rgba(255,170,0,0.04))"><div class="era-bg-label" style="color:var(--society)">Deep Background</div></div>
+        <div class="era-bg" style="left:3000px;background:linear-gradient(90deg,rgba(61,255,122,0.18),rgba(61,255,122,0.04))"><div class="era-bg-label" style="color:var(--biology)">Human Evolution</div></div>
+        <div class="era-bg" style="left:6000px;background:linear-gradient(90deg,rgba(0,212,255,0.18),rgba(0,212,255,0.04))"><div class="era-bg-label" style="color:var(--climate)">Cognitive Emergence</div></div>
+        <div class="era-bg" style="left:9000px;background:linear-gradient(90deg,rgba(255,120,80,0.18),rgba(255,120,80,0.04))"><div class="era-bg-label" style="color:#ff7840">Civilization</div></div>
+        <div class="era-bg" style="left:12000px;background:linear-gradient(90deg,rgba(217,102,255,0.18),rgba(217,102,255,0.04))"><div class="era-bg-label" style="color:var(--tech)">Modern Era</div></div>
+        <svg id="connector-svg"></svg>
+        <div id="tracks">
+          <div class="track" id="track-climate"><div class="track-line"></div></div>
+          <div class="track" id="track-biology"><div class="track-line"></div></div>
+          <div class="track" id="track-society"><div class="track-line"></div></div>
+          <div class="track" id="track-tech"><div class="track-line"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="play-card">
+    <div id="play-card-step"></div>
+    <div id="play-card-date"></div>
+    <div id="play-card-title"></div>
+    <div id="play-card-text"></div>
+    <div id="play-progress-bar"><div id="play-progress-fill"></div></div>
+    <div id="play-card-nav">
+      <button class="play-nav-btn" id="play-prev">← Prev</button>
+      <button class="play-nav-btn" id="play-pause">⏸ Pause</button>
+      <button class="play-nav-btn" id="play-next">Next →</button>
+    </div>
+  </div>
+
+  <div id="panel">
+    <div id="panel-header">
+      <div id="panel-title-group">
+        <div id="panel-date"></div>
+        <div id="panel-title"></div>
+      </div>
+      <button id="panel-close">×</button>
+    </div>
+    <div id="panel-body">
+      <div class="panel-section">
+        <h4 style="color:var(--text3)">What happened</h4>
+        <p id="panel-what"></p>
+      </div>
+      <div class="panel-section">
+        <h4 style="color:var(--climate)">What caused it</h4>
+        <p id="panel-cause"></p>
+        <div class="panel-links" id="panel-cause-links"></div>
+      </div>
+      <div class="panel-section">
+        <h4 style="color:var(--tech)">What it enabled</h4>
+        <p id="panel-effect"></p>
+        <div class="panel-links" id="panel-effect-links"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scrubber-bar">
+    <div id="era-jumps">
+      <button class="era-jump-btn" data-era="0">Deep Bg</button>
+      <button class="era-jump-btn" data-era="1">Evolution</button>
+      <button class="era-jump-btn" data-era="2">Cognitive</button>
+      <button class="era-jump-btn" data-era="3">Civiliz.</button>
+      <button class="era-jump-btn" data-era="4">Modern</button>
+    </div>
+    <div id="scrubber-right">
+      <div id="current-date-label">65 million years ago</div>
+      <div id="scrubber-track">
+        <div id="scrubber-progress"></div>
+        <div id="scrubber-thumb"></div>
+      </div>
+      <div id="zoom-controls">
+        <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+        <span id="zoom-level">1×</span>
+        <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TRACK_COLORS = { climate:'#4fc3f7', biology:'#81c784', society:'#ffb74d', tech:'#ce93d8' };
+const BASE_CW = 15000;
+const ZOOM_LEVELS = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0];
+let zoomIdx = 2; // default = 0.5×
+let CW = BASE_CW;
+
+function getZoom() { return ZOOM_LEVELS[zoomIdx]; }
+function applyZoom() {
+  const zoom = getZoom();
+  CW = Math.round(BASE_CW * zoom);
+  // keep viewport centred on the same timeline position
+  const wrap = document.getElementById('canvas-wrap');
+  const prevMax = parseInt(document.getElementById('canvas').style.width) || BASE_CW;
+  const pct = prevMax > wrap.offsetWidth ? wrap.scrollLeft / (prevMax - wrap.offsetWidth) : 0;
+  document.getElementById('canvas').style.width = CW + 'px';
+  document.getElementById('ruler').style.width = CW + 'px';
+  document.getElementById('connector-svg').style.width = CW + 'px';
+  // reposition all nodes and connectors
+  renderNodes();
+  renderConnectors();
+  // restore scroll position proportionally
+  const newMax = CW - wrap.offsetWidth;
+  targetScroll = Math.max(0, Math.min(CW - wrap.offsetWidth, pct * newMax));
+  currentScroll = targetScroll;
+  wrap.scrollLeft = targetScroll;
+  updateScrubber();
+  // update zoom label & buttons
+  document.getElementById('zoom-level').textContent = zoom % 1 === 0 ? zoom+'×' : zoom+'×';
+  document.getElementById('zoom-out').disabled = zoomIdx === 0;
+  document.getElementById('zoom-in').disabled = zoomIdx === ZOOM_LEVELS.length - 1;
+  // re-render ticks scaled
+  document.getElementById('ticks-era1').innerHTML='';
+  document.getElementById('ticks-era2').innerHTML='';
+  document.getElementById('ticks-era3').innerHTML='';
+  document.getElementById('ticks-era4').innerHTML='';
+  document.getElementById('ticks-era5').innerHTML='';
+  const segs = document.querySelectorAll('.era-tick-seg');
+  segs.forEach(s => s.style.width = (3000 * zoom) + 'px');
+  const eraBands = document.querySelectorAll('.era-ruler-seg');
+  eraBands.forEach(s => s.style.width = (3000 * zoom) + 'px');
+  const eraBgs = document.querySelectorAll('.era-bg');
+  eraBgs.forEach((s,i) => { s.style.width = (3000 * zoom) + 'px'; s.style.left = (i * 3000 * zoom) + 'px'; });
+  renderRulerTicks();
+}
+function nX(e) { const segW = BASE_CW / 5 * getZoom(); return (e.era-1)*segW + e.fraction*segW; }
+function tY(t) {
+  const i = ['climate','biology','society','tech'].indexOf(t);
+  return 80 + 24 + i*(90+12) + 45;
+}
+
+const EVENTS = [
+  {id:1,era:1,track:'climate',fraction:0.08,turning:true,date:'65 million years ago',title:'Mass Extinction Event',what:'An asteroid impact triggered dust clouds, global cooling, and wiped out 75% of species including all non-avian dinosaurs.',cause:'Chicxulub asteroid → stratospheric dust → photosynthesis collapse → food chain collapse',effect:'Mammals freed from dinosaur dominance, filling vacant ecological niches rapidly',causes:[],effects:[2]},
+  {id:2,era:1,track:'biology',fraction:0.22,turning:false,date:'60 million years ago',title:'Rise of Mammals & Primates',what:'With ecological niches vacant, mammals diversified explosively. Early primates emerged in forest canopies.',cause:'Post-extinction vacant niches → rapid mammal diversification → primate lineage emerges',effect:'Primate body plan — grasping hands, forward-facing eyes, social behavior',causes:[1],effects:[4]},
+  {id:3,era:1,track:'climate',fraction:0.46,turning:false,date:'34 million years ago',title:'Global Cooling',what:'CO₂ levels dropped, temperatures fell, and the Antarctic ice sheet formed for the first time.',cause:'CO₂ decline + tectonic shifts → polar glaciation → global temperature drop',effect:'Forest habitats fragment and contract, creating evolutionary pressure',causes:[],effects:[5]},
+  {id:4,era:1,track:'biology',fraction:0.58,turning:false,date:'23 million years ago',title:'Ape–Monkey Split',what:'The lineage separating apes from Old World monkeys diverged. Early hominoids developed larger bodies and greater cognitive capacity.',cause:'Forest canopy ecology → selection for larger brains, flexible behavior, grasping hands',effect:'Hominoid body plan established — foundational to all great apes',causes:[2],effects:[6]},
+  {id:5,era:1,track:'climate',fraction:0.86,turning:true,date:'10 million years ago',title:'African Savanna Expansion',what:'African forests contracted dramatically as the continent cooled and dried. Grasslands replaced dense forest.',cause:'Tectonic uplift + sustained cooling → rainfall decline → forest → savanna transition',effect:'Ground-based locomotion advantageous; survival pressure for bipedalism',causes:[3],effects:[6]},
+  {id:6,era:2,track:'biology',fraction:0.06,turning:true,date:'7 million years ago',title:'Human–Chimp Divergence',what:'The last common ancestor of humans and chimpanzees lived. The path toward Homo sapiens begins.',cause:'Savanna expansion + forest fragmentation → upright posture advantaged for ground travel',effect:'Hominin lineage diverges — the long road to Homo sapiens begins',causes:[4,5],effects:[7]},
+  {id:7,era:2,track:'biology',fraction:0.26,turning:true,date:'4 million years ago',title:'Bipedalism Established',what:'Australopithecus afarensis ("Lucy") walked fully upright, freeing the hands for other uses.',cause:'Savanna life → upright walking more efficient → hands freed → tool use becomes possible',effect:'Free hands can carry food, use tools, and make gestures — enabling social signaling',causes:[6],effects:[8]},
+  {id:8,era:2,track:'tech',fraction:0.39,turning:true,date:'3.3 million years ago',title:'Oldowan Stone Tools',what:'The earliest known stone tools — deliberately flaked rocks for cutting — appear in East Africa.',cause:'Free hands + cognitive leap → intentional flaking of stone for sharp edges',effect:'Meat-eating increases dramatically, providing calories for brain growth',causes:[7],effects:[9]},
+  {id:9,era:2,track:'biology',fraction:0.53,turning:false,date:'2 million years ago',title:'Homo Erectus — Brain Doubles',what:'Homo erectus had a brain nearly twice the size of Australopithecus and was the first hominin to leave Africa.',cause:'Improved diet + cooperative social groups → selection for larger brain',effect:'Longer childhood, more social learning, precursor behaviors to language',causes:[8],effects:[10,12]},
+  {id:10,era:2,track:'tech',fraction:0.63,turning:false,date:'1.7 million years ago',title:'Acheulean Hand Axes',what:'Symmetric, carefully shaped hand axes represent a leap in cognitive planning — visualizing a 3D form before creating it.',cause:'Larger brain → capacity for future planning → symmetric tool shaping',effect:'Hunting efficiency rises; hominins expand range across continents',causes:[9],effects:[]},
+  {id:11,era:2,track:'climate',fraction:0.73,turning:false,date:'1 million years ago',title:'Ice Age Cycles Intensify',what:'Glacial–interglacial cycles began oscillating every 100,000 years, repeatedly reshaping habitats.',cause:'Milankovitch orbital cycles → ice sheet advance and retreat → habitat instability',effect:'Migration pressure and resource stress accelerate adaptive intelligence selection',causes:[],effects:[14]},
+  {id:12,era:2,track:'tech',fraction:0.83,turning:true,date:'800,000 years ago',title:'Control of Fire',what:'Homo erectus learned to control fire — for warmth, protection, and cooking food before digestion.',cause:'Accidental fire contact → learned behavior → deliberate fire maintenance',effect:'Cooked food more calorie-dense; smaller gut frees energy for brain growth',causes:[9],effects:[13]},
+  {id:13,era:2,track:'biology',fraction:0.93,turning:false,date:'500,000 years ago',title:'Archaic Homo Sapiens',what:'Populations show transitional features between Homo erectus and modern humans, with continued brain expansion.',cause:'Fire-enhanced diet + social learning → sustained selection for larger neocortex',effect:'Proto-language behaviors; care for injured group members; group coordination',causes:[12],effects:[14]},
+  {id:14,era:3,track:'biology',fraction:0.08,turning:false,date:'300,000 years ago',title:'Anatomically Modern Humans',what:'Homo sapiens with modern skull shape and fully developed vocal tract appear in Africa.',cause:'Continued genetic drift + selection → modern cranial structure and vocal anatomy',effect:'Full language potential now biologically possible — the hardware is ready',causes:[11,13],effects:[16,17]},
+  {id:15,era:3,track:'climate',fraction:0.26,turning:false,date:'74,000 years ago',title:'Toba Supervolcano',what:'The largest volcanic event in 2 million years caused a volcanic winter, reducing human population to near-extinction.',cause:'Massive eruption → stratospheric ash → years of cold and dark → ecosystem collapse',effect:'Genetic bottleneck; surviving groups may have been more cooperative',causes:[],effects:[]},
+  {id:16,era:3,track:'society',fraction:0.39,turning:true,date:'70,000 years ago',title:'Cognitive Revolution',what:'An explosion in behavioral complexity — abstract thinking, planning, symbolic thought, and fiction emerge.',cause:'Possible neural rewiring or language breakthrough → capacity for imagined realities',effect:'Shared myths enable strangers to cooperate at scale — foundation of all human institutions',causes:[14],effects:[17,18]},
+  {id:17,era:3,track:'tech',fraction:0.43,turning:true,date:'70,000 years ago',title:'Complex Language',what:'Full syntactic language — capable of tenses, hypotheticals, and abstract concepts — becomes the defining human technology.',cause:'Cognitive revolution + modern vocal anatomy → recursive grammar, complex communication',effect:'Knowledge transmitted across generations without genetic change — cultural evolution begins',causes:[14,16],effects:[18,19]},
+  {id:18,era:3,track:'society',fraction:0.56,turning:false,date:'60,000 years ago',title:'Out of Africa Migration',what:'Modern humans dispersed from Africa across the globe, reaching Asia, Europe, Australia, and eventually the Americas.',cause:'Language + tools + favorable climate windows → coordinated long-distance migration',effect:'Humans colonize every continent; Neanderthals and other hominins disappear',causes:[16,17],effects:[]},
+  {id:19,era:3,track:'society',fraction:0.73,turning:false,date:'40,000 years ago',title:'Cave Art & Symbolism',what:'Paintings of animals, handprints, and carved figurines appear across Europe and Asia — externalized symbolic thought.',cause:'Language + abstract cognition → desire to record and communicate beyond speech',effect:'Cultural memory stored outside the human brain for the first time',causes:[17],effects:[]},
+  {id:20,era:3,track:'climate',fraction:0.81,turning:false,date:'20,000 years ago',title:'Last Glacial Maximum',what:'Ice sheets reached their greatest extent, lowering sea levels by 120 meters and creating land bridges.',cause:'Milankovitch cycles → peak glaciation → sea level drop → exposed land bridges',effect:'Americas colonized via Beringia; humans adapt to extreme cold environments',causes:[],effects:[22]},
+  {id:21,era:3,track:'tech',fraction:0.86,turning:false,date:'15,000 years ago',title:'Bow, Nets & Boats',what:'Compound tools — requiring multiple components and planning — appear globally: bows, fishnets, dugout canoes.',cause:'Abstract planning capacity → designing tools made of multiple interdependent parts',effect:'Hunting and fishing efficiency leaps; coastal environments become accessible',causes:[],effects:[23]},
+  {id:22,era:3,track:'climate',fraction:0.95,turning:true,date:'11,700 years ago',title:'Holocene — Climate Stabilizes',what:'The last ice age ended, ushering in unprecedented climate stability that has lasted to the present day.',cause:'Orbital warming → ice sheets retreat → CO₂ rises → stable, predictable seasons emerge',effect:'Reliable growing seasons make agriculture viable for the first time',causes:[20],effects:[23]},
+  {id:23,era:4,track:'tech',fraction:0.06,turning:true,date:'10,000 years ago',title:'Neolithic Revolution',what:'Independent domestication of crops in Mesopotamia, China, Mesoamerica, and Africa transforms human subsistence.',cause:'Stable Holocene climate + wild grass variants + sedentary behavior → deliberate cultivation',effect:'Food surplus → population growth → settlements → specialization → social hierarchy',causes:[21,22],effects:[24]},
+  {id:24,era:4,track:'society',fraction:0.19,turning:false,date:'9,000 years ago',title:'Permanent Settlements',what:'Villages of hundreds replaced nomadic bands. Dogs, sheep, cattle, and pigs were domesticated.',cause:'Food surplus → no need to follow herds → permanent structures → village formation',effect:'Division of labor; property and inheritance create social hierarchy',causes:[23],effects:[25,26]},
+  {id:25,era:4,track:'tech',fraction:0.36,turning:true,date:'5,500 years ago',title:'Writing Invented',what:'Cuneiform script in Mesopotamia and hieroglyphs in Egypt emerged to track grain, taxes, and trade.',cause:'Trade complexity + population scale → need for records beyond human memory → symbols standardize',effect:'Laws, history, mathematics, and science become possible',causes:[24],effects:[26,28]},
+  {id:26,era:4,track:'society',fraction:0.43,turning:false,date:'5,000 years ago',title:'First Cities & States',what:'Uruk in Mesopotamia and Memphis in Egypt grew to tens of thousands — the first true urban civilizations.',cause:'Writing + food surplus + hierarchy → centralized governance, taxation, and specialized labor',effect:'Standing armies, monumental architecture, long-distance trade, and state religion emerge',causes:[24,25],effects:[27,28]},
+  {id:27,era:4,track:'tech',fraction:0.51,turning:false,date:'4,500 years ago',title:'Bronze Metallurgy',what:'Alloying copper and tin produced bronze — far harder than either metal alone.',cause:'Trade networks → access to multiple metals → experimental alloying → controlled smelting',effect:'Military advantage for bronze-equipped states drives empire expansion',causes:[26],effects:[]},
+  {id:28,era:4,track:'society',fraction:0.56,turning:false,date:'4,500 years ago',title:'Great Pyramid of Giza',what:'Built over 20 years using ~2.3 million stone blocks — demonstrating the organizational capacity of early states.',cause:'Centralized state + writing + engineering knowledge + massive labor mobilization',effect:'Demonstrates what coordinated human effort under institutional organization can achieve',causes:[25,26],effects:[]},
+  {id:29,era:4,track:'tech',fraction:0.65,turning:false,date:'3,000 years ago',title:'Iron Age Begins',what:'Iron smelting produced cheaper and more abundant metal than bronze, democratizing tools and weapons.',cause:'Bronze scarcity + trade disruption → experimentation with iron ore → smelting techniques',effect:'Agriculture and warfare no longer require elite access to metals; populations expand',causes:[],effects:[]},
+  {id:30,era:4,track:'society',fraction:0.73,turning:true,date:'2,500 years ago',title:'Axial Age — Philosophy',what:'Confucius, Buddha, Socrates, and the Hebrew prophets all lived within a few centuries — a global flowering of moral philosophy.',cause:'Literate urban elites + leisure + existential questions prompted by empire and mortality',effect:'Hinduism, Buddhism, Greek philosophy, and monotheism spread across continents',causes:[25],effects:[31]},
+  {id:31,era:4,track:'society',fraction:0.83,turning:false,date:'2,000 years ago',title:'Roman Empire at Peak',what:'At its height, Rome governed 70 million people across 5 million km² — the largest unified political system in Western history.',cause:'Military innovation + legal systems + roads + common language → unprecedented territorial control',effect:'Roman law, Latin language, and administrative models persist in European civilization today',causes:[30],effects:[]},
+  {id:32,era:4,track:'society',fraction:0.91,turning:false,date:'700 CE',title:'Islamic Golden Age',what:'From Baghdad to Cordoba, Islamic scholars translated, preserved, and extended Greek, Persian, and Indian knowledge.',cause:'Unified caliphate + trade wealth + deliberate translation movement → scholarly institutions',effect:'Algebra, optics, medicine, and astronomy advance; ancient knowledge survives',causes:[],effects:[35]},
+  {id:33,era:4,track:'tech',fraction:0.97,turning:true,date:'1450 CE',title:'Gutenberg Printing Press',what:'Movable type printing made book production 1000× cheaper and faster, making mass literacy economically viable.',cause:'Paper availability + metalworking + wine press mechanics → movable type system',effect:'Protestant Reformation, Scientific Revolution, and mass literacy follow within 150 years',causes:[],effects:[34,35]},
+  {id:34,era:5,track:'society',fraction:0.07,turning:false,date:'1500 CE',title:'Age of Exploration',what:'European powers sailed to the Americas, sub-Saharan Africa, and Asia, connecting the globe for the first time.',cause:'Navigation technology + printing + economic competition → state-sponsored global voyaging',effect:'Columbian Exchange; global trade networks permanently established',causes:[33],effects:[36]},
+  {id:35,era:5,track:'tech',fraction:0.13,turning:true,date:'1543–1687 CE',title:'Scientific Revolution',what:'From Copernicus to Newton, a new method — hypothesis, experiment, mathematics — replaced authority with evidence.',cause:'Printing press + observational instruments + economic support → systematic empiricism',effect:'Mathematical understanding of nature replaces dogma as the basis for knowledge',causes:[32,33],effects:[37]},
+  {id:36,era:5,track:'society',fraction:0.21,turning:false,date:'1600–1800 CE',title:'Colonialism & Capitalism',what:'European empires extracted resources from the Americas, Africa, and Asia, accumulating capital that would fuel industrialization.',cause:'Exploration + military technology + mercantile economics → systematic empire-building',effect:'Global wealth concentration; Atlantic trade networks; enslaved labor builds industrial capital',causes:[34],effects:[37]},
+  {id:37,era:5,track:'tech',fraction:0.39,turning:true,date:'1760–1840 CE',title:'Industrial Revolution',what:'Steam engines powered by coal mechanized production, transforming Britain and then the world from agrarian to industrial economies.',cause:'Coal energy + scientific method + accumulated capital + textile demand → mechanical power',effect:'Mass production, urbanization, and the fossil fuel economy begin simultaneously',causes:[35,36],effects:[38,40]},
+  {id:38,era:5,track:'climate',fraction:0.49,turning:false,date:'~1800 CE',title:'Anthropocene Begins',what:'Human industrial activity begins measurably altering Earth\'s atmosphere — the first planetary-scale human impact on climate.',cause:'Industrial coal burning → CO₂ accumulation in atmosphere → greenhouse warming',effect:'Global temperatures begin rising; the feedback loop of human civilization on climate is established',causes:[37],effects:[]},
+  {id:39,era:5,track:'biology',fraction:0.53,turning:false,date:'1859 CE',title:'Darwin — Theory of Evolution',what:'On the Origin of Species unified biology under a single explanatory framework: all life connected by descent with modification.',cause:'Scientific method + fossil record + breeding observations + Malthus → natural selection framework',effect:'Humans understand their own biological origin for the first time; medicine and genetics follow',causes:[35],effects:[]},
+  {id:40,era:5,track:'tech',fraction:0.61,turning:true,date:'1870–1900 CE',title:'Electricity & Telegraph',what:'Electrical grids, light bulbs, and telegraph cables transformed energy distribution and communication simultaneously.',cause:'Maxwell\'s electromagnetic theory → practical generation, transmission, and application',effect:'Information travels faster than physical movement for the first time in history',causes:[37],effects:[41]},
+  {id:41,era:5,track:'tech',fraction:0.76,turning:true,date:'1945 CE',title:'Nuclear Age & First Computer',what:'WWII produced both nuclear weapons and ENIAC — the first programmable electronic computer — in the same decade.',cause:'War urgency + physics breakthroughs + engineering scale → convergence of atomic and digital technology',effect:'Programmable logic machines established; existential risk era begins; Cold War drives technology race',causes:[40],effects:[42,44]},
+  {id:42,era:5,track:'tech',fraction:0.82,turning:false,date:'1957 CE',title:'Space Age — Sputnik',what:'The Soviet Sputnik satellite was the first human-made object to orbit Earth, initiating the space race.',cause:'Cold War competition + WWII rocketry + computer navigation → orbit achieved',effect:'Satellites, GPS, weather forecasting, and global communications infrastructure follow',causes:[41],effects:[]},
+  {id:43,era:5,track:'society',fraction:0.86,turning:false,date:'1969 CE',title:'Moon Landing',what:'Neil Armstrong and Buzz Aldrin landed on the Moon — the first time any species left its home planet.',cause:'Political will + computers + rockets + 400,000 engineers → lunar landing achieved',effect:'Demonstrates the organizational and technological ceiling of coordinated human ambition',causes:[42],effects:[]},
+  {id:44,era:5,track:'tech',fraction:0.92,turning:true,date:'1991 CE',title:'World Wide Web',what:'Tim Berners-Lee\'s hypertext system became the public internet — connecting every human\'s knowledge to every other.',cause:'Military network + hypertext protocol + browser software → open global information access',effect:'Knowledge fully democratized; global nervous system forms; information economy begins',causes:[41],effects:[45]},
+  {id:45,era:5,track:'tech',fraction:0.98,turning:true,date:'2012 — Present',title:'AI',what:'Neural networks trained on vast data began outperforming humans at perception, language, and reasoning tasks.',cause:'Big data + GPU computing + decades of neural network research → machines learn from examples',effect:'The first time intelligence itself is being engineered — culmination of 65 million years of biological evolution',causes:[44],effects:[]},
+];
+
+// ══ STARFIELD ══
+function initStarfield() {
+  const wrap = document.getElementById('canvas-wrap');
+  const W = window.innerWidth, H = window.innerHeight;
+  const layers = [
+    {id:'sc-far',  count:180, minR:0.4, maxR:0.9,  speed:0.012, minA:0.15, maxA:0.45},
+    {id:'sc-mid',  count:85,  minR:0.8, maxR:1.4,  speed:0.03,  minA:0.25, maxA:0.55},
+    {id:'sc-near', count:35,  minR:1.2, maxR:2.2,  speed:0.06,  minA:0.35, maxA:0.65},
+  ];
+  layers.forEach(l => {
+    const c = document.getElementById(l.id);
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    l.ctx = ctx; l.canvas = c;
+    l.stars = Array.from({length:l.count}, () => ({
+      x: Math.random()*W, y: Math.random()*H,
+      r: l.minR + Math.random()*(l.maxR-l.minR),
+      a: l.minA + Math.random()*(l.maxA-l.minA),
+      tw: Math.random()*Math.PI*2,
+    }));
+  });
+  function draw() {
+    const pct = CW > wrap.offsetWidth ? wrap.scrollLeft/(CW-wrap.offsetWidth) : 0;
+    const t = Date.now()/1000;
+    layers.forEach(l => {
+      l.ctx.clearRect(0,0,W,H);
+      const off = pct * W * l.speed * 60;
+      l.stars.forEach(s => {
+        const tw = 0.88 + 0.12*Math.sin(t*0.6 + s.tw);
+        l.ctx.beginPath();
+        l.ctx.arc(((s.x - off) % W + W) % W, s.y, s.r, 0, Math.PI*2);
+        l.ctx.fillStyle = `rgba(255,255,255,${s.a*tw})`;
+        l.ctx.fill();
+      });
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ══ NODES ══
+function renderNodes() {
+  // clear existing nodes (keep .track-line)
+  ['climate','biology','society','tech'].forEach(t => {
+    const tr = document.getElementById('track-'+t);
+    tr.querySelectorAll('.node').forEach(n => n.remove());
+  });
+  EVENTS.forEach(evt => {
+    const tr = document.getElementById('track-'+evt.track); if(!tr) return;
+    const el = document.createElement('div');
+    el.className = `node ${evt.track}${evt.turning?' turning':''}`;
+    el.style.left = nX(evt)+'px'; el.dataset.id = evt.id;
+    const dot = document.createElement('div');
+    dot.className = 'node-dot '+(evt.turning?'turning':'standard');
+    const lbl = document.createElement('div'); lbl.className='node-label'; lbl.textContent=evt.title;
+    if(evt.track==='climate'||evt.track==='biology') el.style.flexDirection='column-reverse';
+    el.appendChild(dot); el.appendChild(lbl); tr.appendChild(el);
+    el.addEventListener('click', e => { e.stopPropagation(); openPanel(evt); hlConn(evt.id); });
+  });
+}
+
+// ══ CONNECTORS with flow animation ══
+function renderConnectors() {
+  const svg = document.getElementById('connector-svg');
+  svg.innerHTML = '';
+  svg.setAttribute('height','700');
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  svg.appendChild(defs);
+
+  EVENTS.forEach(evt => {
+    evt.effects.forEach(tid => {
+      const tgt = EVENTS.find(e=>e.id===tid); if(!tgt) return;
+      const x1=nX(evt),y1=tY(evt.track),x2=nX(tgt),y2=tY(tgt.track);
+      const isAlways = evt.turning && tgt.turning;
+      const col = TRACK_COLORS[evt.track];
+      const cx1=x1+(x2-x1)*0.38, cy1=y1, cx2=x1+(x2-x1)*0.62, cy2=y2;
+      const d=`M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
+
+      // arrow marker
+      const mid=`arr-${evt.id}-${tid}`;
+      const mk=document.createElementNS('http://www.w3.org/2000/svg','marker');
+      mk.setAttribute('id',mid); mk.setAttribute('markerWidth','6'); mk.setAttribute('markerHeight','6');
+      mk.setAttribute('refX','5'); mk.setAttribute('refY','3'); mk.setAttribute('orient','auto');
+      const ap=document.createElementNS('http://www.w3.org/2000/svg','path');
+      ap.setAttribute('d','M 0 0 L 6 3 L 0 6 z'); ap.setAttribute('fill',col); ap.setAttribute('fill-opacity','0.7');
+      mk.appendChild(ap); defs.appendChild(mk);
+
+      if(isAlways) {
+        // base track
+        const base=document.createElementNS('http://www.w3.org/2000/svg','path');
+        base.setAttribute('d',d); base.setAttribute('fill','none');
+        base.setAttribute('stroke',col); base.setAttribute('stroke-width','1');
+        base.setAttribute('stroke-opacity','0.6'); svg.appendChild(base);
+        // animated flow
+        const flow=document.createElementNS('http://www.w3.org/2000/svg','path');
+        flow.setAttribute('d',d); flow.setAttribute('fill','none');
+        flow.setAttribute('stroke',col); flow.setAttribute('stroke-width','1.5');
+        flow.setAttribute('stroke-opacity','0.85');
+        flow.setAttribute('stroke-dasharray','6 14');
+        flow.setAttribute('marker-end',`url(#${mid})`);
+        const dur=(1.8+Math.random()*1.4).toFixed(2);
+        flow.style.animation=`flowDash ${dur}s linear infinite`;
+        svg.appendChild(flow);
+      } else {
+        // base track
+        const base=document.createElementNS('http://www.w3.org/2000/svg','path');
+        base.setAttribute('d',d); base.setAttribute('fill','none');
+        base.setAttribute('stroke',col); base.setAttribute('stroke-width','1');
+        base.setAttribute('stroke-opacity','0.6');
+        base.className.baseVal='connector-hidden'; base.dataset.from=evt.id; base.dataset.to=tid;
+        svg.appendChild(base);
+        // animated flow
+        const flow=document.createElementNS('http://www.w3.org/2000/svg','path');
+        flow.setAttribute('d',d); flow.setAttribute('fill','none');
+        flow.setAttribute('stroke',col); flow.setAttribute('stroke-width','1.5');
+        flow.setAttribute('stroke-dasharray','6 14');
+        flow.setAttribute('marker-end',`url(#${mid})`);
+        const dur=(1.8+Math.random()*1.4).toFixed(2);
+        flow.style.animation=`flowDash ${dur}s linear infinite`;
+        flow.className.baseVal='connector-hidden'; flow.dataset.from=evt.id; flow.dataset.to=tid;
+        svg.appendChild(flow);
+      }
+    });
+  });
+}
+
+function hlConn(id) {
+  document.querySelectorAll('.connector-hidden').forEach(e=>{e.classList.remove('visible');e.classList.add('dimmed');});
+  document.querySelectorAll(`[data-from="${id}"],[data-to="${id}"]`).forEach(e=>{e.classList.add('visible');e.classList.remove('dimmed');});
+}
+
+// ══ PANEL ══
+const panel = document.getElementById('panel');
+function openPanel(evt) {
+  const col=TRACK_COLORS[evt.track];
+  const pd=document.getElementById('panel-date'); pd.textContent=evt.date; pd.style.color=col;
+  document.getElementById('panel-title').textContent=evt.title;
+  document.getElementById('panel-what').textContent=evt.what;
+  document.getElementById('panel-cause').textContent=evt.cause;
+  document.getElementById('panel-effect').textContent=evt.effect;
+  const cl=document.getElementById('panel-cause-links'); cl.innerHTML='';
+  evt.causes.forEach(cid=>{
+    const ce=EVENTS.find(e=>e.id===cid); if(!ce) return;
+    const b=document.createElement('div'); b.className='panel-link';
+    b.textContent='← '+ce.title; b.style.borderColor=TRACK_COLORS[ce.track]+'55';
+    b.addEventListener('click',()=>{openPanel(ce);scrollTo(ce);});
+    cl.appendChild(b);
+  });
+  const el=document.getElementById('panel-effect-links'); el.innerHTML='';
+  evt.effects.forEach(eid=>{
+    const ee=EVENTS.find(e=>e.id===eid); if(!ee) return;
+    const b=document.createElement('div'); b.className='panel-link';
+    b.textContent='→ '+ee.title; b.style.borderColor=TRACK_COLORS[ee.track]+'55';
+    b.addEventListener('click',()=>{openPanel(ee);scrollTo(ee);});
+    el.appendChild(b);
+  });
+  panel.classList.add('open');
+}
+function closePanel() {
+  panel.classList.remove('open');
+  document.querySelectorAll('.connector-hidden').forEach(e=>{e.classList.remove('visible');e.classList.remove('dimmed');});
+}
+document.getElementById('panel-close').addEventListener('click',closePanel);
+
+function scrollTo(evt,instant) {
+  const wrap=document.getElementById('canvas-wrap');
+  const dest = Math.max(0, Math.min(CW - wrap.offsetWidth, nX(evt) - wrap.offsetWidth/2));
+  if(instant) { targetScroll=dest; currentScroll=dest; wrap.scrollLeft=dest; }
+  else { targetScroll=dest; startScroll(); }
+}
+
+// ══ SCRUBBER ══
+const cw = document.getElementById('canvas-wrap');
+function updateScrubber() {
+  const max=CW-cw.offsetWidth, pct=max>0?cw.scrollLeft/max:0;
+  document.getElementById('scrubber-thumb').style.left=(pct*100)+'%';
+  document.getElementById('scrubber-progress').style.width=(pct*100)+'%';
+  document.getElementById('current-date-label').textContent=pctToDate(pct);
+  const segW = CW / 5;
+  const era=Math.min(4,Math.floor((pct*CW)/segW));
+  document.querySelectorAll('.era-jump-btn').forEach((b,i)=>b.classList.toggle('current',i===era));
+}
+function pctToDate(pct) {
+  const segW = CW / 5;
+  const px=pct*CW, era=Math.floor(px/segW), f=(px%segW)/segW;
+  const spans=[[65e6,7e6],[7e6,300e3],[300e3,10e3],[10e3,-1500],[-1500,-2025]];
+  if(era>=5) return 'Present';
+  const [s,e]=spans[era], v=s+(e-s)*f;
+  if(v>1e6) return Math.round(v/1e6)+' million years ago';
+  if(v>1000) return Math.round(v/1000).toLocaleString()+',000 years ago';
+  if(v>0) return Math.round(v)+' years ago';
+  return Math.abs(Math.round(v))+' CE';
+}
+cw.addEventListener('scroll',updateScrubber);
+const st=document.getElementById('scrubber-track');
+let sd=false;
+st.addEventListener('pointerdown',e=>{sd=true;st.setPointerCapture(e.pointerId);ms(e);});
+st.addEventListener('pointermove',e=>{if(sd)ms(e);});
+st.addEventListener('pointerup',()=>{sd=false;});
+function ms(e){const r=st.getBoundingClientRect(),p=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));targetScroll=p*(CW-cw.offsetWidth);currentScroll=targetScroll;cw.scrollLeft=targetScroll;}
+
+document.querySelectorAll('.era-jump-btn').forEach(b=>b.addEventListener('click',()=>{
+  const segW = CW / 5;
+  targetScroll = Math.max(0, parseInt(b.dataset.era)*segW + 200);
+  startScroll();
+}));
+
+// wheel + drag — smooth momentum scrolling
+let targetScroll = cw.scrollLeft;
+let currentScroll = cw.scrollLeft;
+let rafId = null;
+
+function animateScroll() {
+  const diff = targetScroll - currentScroll;
+  if (Math.abs(diff) < 0.5) {
+    currentScroll = targetScroll;
+    cw.scrollLeft = currentScroll;
+    rafId = null;
+    return;
+  }
+  currentScroll += diff * 0.1;
+  cw.scrollLeft = currentScroll;
+  rafId = requestAnimationFrame(animateScroll);
+}
+
+function startScroll() {
+  if (!rafId) rafId = requestAnimationFrame(animateScroll);
+}
+
+cw.addEventListener('wheel', e => {
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    e.preventDefault();
+    targetScroll = Math.max(0, Math.min(CW - cw.offsetWidth, targetScroll + e.deltaY * 1.6));
+  } else {
+    e.preventDefault();
+    targetScroll = Math.max(0, Math.min(CW - cw.offsetWidth, targetScroll + e.deltaX * 1.6));
+  }
+  startScroll();
+}, { passive: false });
+
+let drag = false, dx = 0, sx = 0, lastDragX = 0, dragVel = 0;
+cw.addEventListener('pointerdown', e => {
+  if (e.target.closest('.node')) return;
+  drag = true; dx = e.clientX; sx = targetScroll;
+  lastDragX = e.clientX; dragVel = 0;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  cw.classList.add('grabbing');
+  cw.setPointerCapture(e.pointerId);
+});
+cw.addEventListener('pointermove', e => {
+  if (!drag) return;
+  dragVel = lastDragX - e.clientX;
+  lastDragX = e.clientX;
+  targetScroll = Math.max(0, Math.min(CW - cw.offsetWidth, sx - (e.clientX - dx)));
+  currentScroll = targetScroll;
+  cw.scrollLeft = currentScroll;
+});
+cw.addEventListener('pointerup', () => {
+  if (!drag) return;
+  drag = false;
+  cw.classList.remove('grabbing');
+  // fling: carry momentum from drag velocity
+  targetScroll = Math.max(0, Math.min(CW - cw.offsetWidth, targetScroll + dragVel * 8));
+  startScroll();
+});
+cw.addEventListener('click',e=>{if(!e.target.closest('.node'))closePanel();});
+
+// ══ SEARCH ══
+const sb=document.getElementById('search-btn'), sbr=document.getElementById('search-bar');
+const si=document.getElementById('search-input'), sr=document.getElementById('search-results');
+sb.addEventListener('click',()=>{
+  const open=sbr.classList.toggle('open');
+  sb.classList.toggle('active',open);
+  if(open){si.focus();si.value='';sr.innerHTML='';}
+});
+si.addEventListener('input',()=>{
+  const q=si.value.trim().toLowerCase(); sr.innerHTML='';
+  if(!q) return;
+  EVENTS.filter(e=>e.title.toLowerCase().includes(q)||e.what.toLowerCase().includes(q)||e.date.toLowerCase().includes(q)||e.track.includes(q))
+    .slice(0,8).forEach(evt=>{
+      const d=document.createElement('div'); d.className='sri';
+      d.innerHTML=`<span class="sri-track" style="color:${TRACK_COLORS[evt.track]}">${evt.track}</span><span class="sri-title">${evt.title}</span><span class="sri-date">${evt.date}</span>`;
+      d.addEventListener('click',()=>{
+        scrollTo(evt);
+        setTimeout(()=>{openPanel(evt);hlConn(evt.id);},400);
+        sbr.classList.remove('open'); sb.classList.remove('active');
+      });
+      sr.appendChild(d);
+    });
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){sbr.classList.remove('open');sb.classList.remove('active');}});
+
+// ══ PLAY MODE ══
+const playBtn=document.getElementById('play-btn');
+const playCard=document.getElementById('play-card');
+const PLAY_SEQ=[...EVENTS].sort((a,b)=>a.era!==b.era?a.era-b.era:a.fraction-b.fraction);
+let playIdx=0, playing=false, playTimer=null;
+const PLAY_DUR=5000;
+
+function enterPlay() {
+  playing=true; playBtn.textContent='⏹ Stop'; playBtn.classList.add('play-active');
+  closePanel(); playIdx=0; showPlay(0); startTimer();
+}
+function exitPlay() {
+  playing=false; playBtn.textContent='▶ Play'; playBtn.classList.remove('play-active');
+  clearTimeout(playTimer); playCard.classList.remove('visible');
+  document.querySelectorAll('.node').forEach(n=>{n.classList.remove('dimmed','spotlight');});
+  document.querySelectorAll('.connector-hidden').forEach(e=>{e.classList.remove('visible');e.classList.remove('dimmed');});
+}
+function showPlay(i) {
+  const evt=PLAY_SEQ[i], col=TRACK_COLORS[evt.track];
+  document.getElementById('play-card-step').textContent=`Event ${i+1} of ${PLAY_SEQ.length}`;
+  document.getElementById('play-card-step').style.color=col;
+  document.getElementById('play-card-date').textContent=evt.date;
+  document.getElementById('play-card-date').style.color=col;
+  document.getElementById('play-card-title').textContent=evt.title;
+  document.getElementById('play-card-text').textContent=evt.what;
+  document.getElementById('play-progress-fill').style.width=((i+1)/PLAY_SEQ.length*100)+'%';
+  document.getElementById('play-prev').disabled=i===0;
+  document.getElementById('play-next').disabled=i===PLAY_SEQ.length-1;
+  playCard.classList.add('visible');
+  document.querySelectorAll('.node').forEach(n=>{
+    const nid=parseInt(n.dataset.id);
+    n.classList.toggle('spotlight',nid===evt.id);
+    n.classList.toggle('dimmed',nid!==evt.id);
+  });
+  hlConn(evt.id);
+  scrollTo(evt);
+}
+function startTimer() {
+  clearTimeout(playTimer); if(!playing) return;
+  playTimer=setTimeout(()=>{
+    if(playIdx<PLAY_SEQ.length-1){playIdx++;showPlay(playIdx);startTimer();}
+    else exitPlay();
+  },PLAY_DUR);
+}
+playBtn.addEventListener('click',()=>{if(playing)exitPlay();else enterPlay();});
+document.getElementById('play-prev').addEventListener('click',()=>{clearTimeout(playTimer);if(playIdx>0){playIdx--;showPlay(playIdx);}startTimer();});
+document.getElementById('play-next').addEventListener('click',()=>{clearTimeout(playTimer);if(playIdx<PLAY_SEQ.length-1){playIdx++;showPlay(playIdx);}startTimer();});
+const pauseBtn=document.getElementById('play-pause');
+pauseBtn.addEventListener('click',()=>{
+  if(playTimer){clearTimeout(playTimer);playTimer=null;pauseBtn.textContent='▶ Resume';}
+  else{pauseBtn.textContent='⏸ Pause';startTimer();}
+});
+
+
+// ══ RULER TICKS ══
+function renderRulerTicks() {
+  // Each era: [start_age, end_age, ticks array [{age, label, major}], color]
+  const ERAS = [
+    { id:'ticks-era1', color:'#ffb74d', start:65e6, end:7e6, ticks:[
+      {f:0,    label:'65M yr', major:true},
+      {f:0.135,label:'56M yr', major:false},
+      {f:0.27, label:'47M yr', major:false},
+      {f:0.4,  label:'40M yr', major:true},
+      {f:0.54, label:'30M yr', major:false},
+      {f:0.68, label:'20M yr', major:false},
+      {f:0.82, label:'12M yr', major:false},
+      {f:1.0,  label:'7M yr',  major:true},
+    ]},
+    { id:'ticks-era2', color:'#81c784', start:7e6, end:300e3, ticks:[
+      {f:0,    label:'7M yr',   major:true},
+      {f:0.2,  label:'5.5M yr', major:false},
+      {f:0.4,  label:'4.2M yr', major:false},
+      {f:0.57, label:'3M yr',   major:true},
+      {f:0.71, label:'2M yr',   major:false},
+      {f:0.85, label:'1M yr',   major:false},
+      {f:1.0,  label:'300K yr', major:true},
+    ]},
+    { id:'ticks-era3', color:'#4fc3f7', start:300e3, end:10e3, ticks:[
+      {f:0,    label:'300K yr', major:true},
+      {f:0.17, label:'250K yr', major:false},
+      {f:0.33, label:'200K yr', major:false},
+      {f:0.5,  label:'150K yr', major:true},
+      {f:0.67, label:'100K yr', major:false},
+      {f:0.83, label:'50K yr',  major:false},
+      {f:1.0,  label:'10K yr',  major:true},
+    ]},
+    { id:'ticks-era4', color:'#ff7840', start:10e3, end:500, ticks:[
+      {f:0,    label:'10K yr', major:true},
+      {f:0.14, label:'8500 yr',major:false},
+      {f:0.29, label:'7K yr',  major:false},
+      {f:0.43, label:'5500 yr',major:true},
+      {f:0.57, label:'4K yr',  major:false},
+      {f:0.71, label:'2500 yr',major:false},
+      {f:0.86, label:'1000 yr',major:false},
+      {f:1.0,  label:'1500 CE',major:true},
+    ]},
+    { id:'ticks-era5', color:'#ce93d8', start:1500, end:2025, ticks:[
+      {f:0,    label:'1500', major:true},
+      {f:0.19, label:'1600', major:false},
+      {f:0.38, label:'1700', major:false},
+      {f:0.57, label:'1800', major:true},
+      {f:0.67, label:'1850', major:false},
+      {f:0.76, label:'1900', major:true},
+      {f:0.86, label:'1950', major:false},
+      {f:0.95, label:'2000', major:false},
+      {f:1.0,  label:'Now',  major:true},
+    ]},
+  ];
+
+  ERAS.forEach(era => {
+    const seg = document.getElementById(era.id);
+    const segW = 3000 * getZoom();
+    era.ticks.forEach(t => {
+      const wrap = document.createElement('div');
+      wrap.className = 'ruler-tick';
+      wrap.style.left = (t.f * segW) + 'px';
+
+      const lbl = document.createElement('span');
+      lbl.className = 'ruler-tick-label';
+      lbl.textContent = t.label;
+      lbl.style.color = t.major ? era.color : 'var(--text3)';
+
+      const line = document.createElement('div');
+      line.className = 'ruler-tick-line' + (t.major ? ' major' : '');
+      line.style.height = t.major ? '14px' : '8px';
+      if(t.major) line.style.background = era.color;
+
+      wrap.appendChild(lbl);
+      wrap.appendChild(line);
+      seg.appendChild(wrap);
+    });
+  });
+}
+
+// ══ ZOOM ══
+document.getElementById('zoom-in').addEventListener('click', () => {
+  if (zoomIdx < ZOOM_LEVELS.length - 1) { zoomIdx++; applyZoom(); }
+});
+document.getElementById('zoom-out').addEventListener('click', () => {
+  if (zoomIdx > 0) { zoomIdx--; applyZoom(); }
+});
+
+// ══ INIT ══
+initStarfield();
+CW = Math.round(BASE_CW * getZoom());
+document.getElementById('canvas').style.width = CW + 'px';
+document.getElementById('ruler').style.width = CW + 'px';
+document.getElementById('connector-svg').style.width = CW + 'px';
+document.querySelectorAll('.era-tick-seg').forEach(s => s.style.width = (3000 * getZoom()) + 'px');
+document.querySelectorAll('.era-ruler-seg').forEach(s => s.style.width = (3000 * getZoom()) + 'px');
+document.querySelectorAll('.era-bg').forEach((s,i) => { s.style.width = (3000 * getZoom()) + 'px'; s.style.left = (i * 3000 * getZoom()) + 'px'; });
+document.getElementById('zoom-level').textContent = getZoom() + '×';
+document.getElementById('zoom-out').disabled = zoomIdx === 0;
+document.getElementById('zoom-in').disabled = zoomIdx === ZOOM_LEVELS.length - 1;
+renderRulerTicks();
+renderNodes();
+setTimeout(()=>{renderConnectors();updateScrubber();},120);
+</script>
+</body>
+</html>
