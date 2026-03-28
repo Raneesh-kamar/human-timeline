@@ -302,7 +302,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div id="canvas">
         <div id="ruler">
           <div id="ruler-era-band">
-            <div class="era-ruler-seg" style="background:rgba(255,183,77,0.12)"><span class="era-ruler-label" style="color:var(--society)">● Deep Background</span><span class="era-ruler-date">65M → 7M yrs ago</span></div>
+            <div class="era-ruler-seg" style="background:rgba(255,183,77,0.12)"><span class="era-ruler-label" style="color:var(--society)">● After Dinosaurs</span><span class="era-ruler-date">65M → 7M yrs ago</span></div>
             <div class="era-ruler-seg" style="background:rgba(129,199,132,0.12)"><span class="era-ruler-label" style="color:var(--biology)">● Human Evolution</span><span class="era-ruler-date">7M → 300K yrs ago</span></div>
             <div class="era-ruler-seg" style="background:rgba(79,195,247,0.12)"><span class="era-ruler-label" style="color:var(--climate)">● Cognitive Emergence</span><span class="era-ruler-date">300K → 10K yrs ago</span></div>
             <div class="era-ruler-seg" style="background:rgba(255,120,80,0.12)"><span class="era-ruler-label" style="color:#ff7840">● Civilization</span><span class="era-ruler-date">10K yrs ago → 1500 CE</span></div>
@@ -316,7 +316,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
             <div class="era-tick-seg" id="ticks-era5"></div>
           </div>
         </div>
-        <div class="era-bg" style="left:0;background:linear-gradient(90deg,rgba(255,170,0,0.18),rgba(255,170,0,0.04))"><div class="era-bg-label" style="color:var(--society)">Deep Background</div></div>
+        <div class="era-bg" style="left:0;background:linear-gradient(90deg,rgba(255,170,0,0.18),rgba(255,170,0,0.04))"><div class="era-bg-label" style="color:var(--society)">After Dinosaurs</div></div>
         <div class="era-bg" style="left:3000px;background:linear-gradient(90deg,rgba(61,255,122,0.18),rgba(61,255,122,0.04))"><div class="era-bg-label" style="color:var(--biology)">Human Evolution</div></div>
         <div class="era-bg" style="left:6000px;background:linear-gradient(90deg,rgba(0,212,255,0.18),rgba(0,212,255,0.04))"><div class="era-bg-label" style="color:var(--climate)">Cognitive Emergence</div></div>
         <div class="era-bg" style="left:9000px;background:linear-gradient(90deg,rgba(255,120,80,0.18),rgba(255,120,80,0.04))"><div class="era-bg-label" style="color:#ff7840">Civilization</div></div>
@@ -1061,5 +1061,8 @@ renderRulerTicks();
 renderNodes();
 setTimeout(()=>{renderConnectors();updateScrubber();},120);
 </script>
+<div style="position:fixed;bottom:0;left:0;width:80px;height:var(--scrubber-h);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:15;overflow:hidden;">
+  <span style="font-family:var(--font-display);font-size:0.7rem;font-style:italic;color:var(--text);opacity:0.5;letter-spacing:0.06em;writing-mode:horizontal-tb;">Raneesh</span>
+</div>
 </body>
 </html>
