@@ -167,11 +167,87 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 #scrubber-track { flex: 1; height: 3px; background: var(--surface); border-radius: 2px; position: relative; cursor: pointer; }
 #scrubber-thumb { position: absolute; top: 50%; transform: translate(-50%,-50%); width: 11px; height: 11px; background: var(--text); border-radius: 50%; cursor: grab; }
 #scrubber-progress { position: absolute; left: 0; top: 0; height: 100%; background: var(--border2); border-radius: 2px; pointer-events: none; }
-#zoom-controls { display: flex; align-items: center; gap: 0; flex-shrink: 0; border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
-.zoom-btn { width: 28px; height: 28px; background: transparent; border: none; color: var(--text2); font-size: 1rem; line-height: 1; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); }
-.zoom-btn:hover { background: var(--surface); color: var(--text); }
-.zoom-btn:disabled { opacity: 0.25; cursor: default; }
-#zoom-level { font-family: var(--font-mono); font-size: 0.52rem; color: var(--text3); letter-spacing: 0.06em; min-width: 32px; text-align: center; border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding: 0 4px; height: 28px; display: flex; align-items: center; justify-content: center; }
+/* ── ZOOM WIDGET (bottom-left floating) ── */
+#zoom-widget {
+  position: fixed;
+  bottom: calc(var(--scrubber-h) + 14px);
+  left: 14px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 36px;
+  background: rgba(10,10,22,0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border2);
+  border-radius: 18px;
+  padding: 10px 0 10px 0;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  user-select: none;
+}
+.zoom-icon-btn {
+  width: 28px; height: 28px;
+  background: transparent; border: none;
+  color: var(--text3);
+  font-size: 1.1rem; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  transition: color 0.18s, background 0.18s;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+.zoom-icon-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+.zoom-icon-btn:active { color: var(--tech); }
+#zoom-slider-wrap {
+  position: relative;
+  width: 4px;
+  height: 90px;
+  margin: 8px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#zoom-slider-track {
+  position: absolute;
+  width: 4px; height: 100%;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: visible;
+}
+#zoom-slider-fill {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 4px;
+  background: linear-gradient(to top, var(--tech), rgba(217,102,255,0.4));
+  border-radius: 2px;
+  transition: height 0.05s;
+}
+#zoom-slider-thumb {
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  width: 14px; height: 14px;
+  background: var(--bg2);
+  border: 2px solid var(--tech);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--tech-glow), 0 2px 6px rgba(0,0,0,0.6);
+  cursor: grab;
+  transition: box-shadow 0.2s, transform 0.1s;
+  z-index: 2;
+}
+#zoom-slider-thumb:hover { box-shadow: 0 0 14px var(--tech-glow), 0 2px 6px rgba(0,0,0,0.6); }
+#zoom-slider-thumb.dragging { cursor: grabbing; transform: translateX(-50%) scale(1.2); box-shadow: 0 0 18px var(--tech-glow); }
+#zoom-level-label {
+  font-family: var(--font-mono);
+  font-size: 0.48rem;
+  letter-spacing: 0.06em;
+  color: var(--text3);
+  text-align: center;
+  margin-top: 2px;
+  line-height: 1;
+  min-height: 10px;
+}
 
 /* ── TRUE SCALE ── */
 
@@ -309,60 +385,86 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
         <div id="scrubber-progress"></div>
         <div id="scrubber-thumb"></div>
       </div>
-      <div id="zoom-controls">
-        <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
-        <span id="zoom-level">1×</span>
-        <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
-      </div>
     </div>
   </div>
+</div>
+
+<!-- Floating zoom widget -->
+<div id="zoom-widget">
+  <button class="zoom-icon-btn" id="zoom-in" title="Zoom in">+</button>
+  <div id="zoom-slider-wrap">
+    <div id="zoom-slider-track">
+      <div id="zoom-slider-fill"></div>
+    </div>
+    <div id="zoom-slider-thumb"></div>
+  </div>
+  <button class="zoom-icon-btn" id="zoom-out" title="Zoom out">−</button>
+  <span id="zoom-level-label">1×</span>
 </div>
 
 <script>
 const TRACK_COLORS = { climate:'#4fc3f7', biology:'#81c784', society:'#ffb74d', tech:'#ce93d8' };
 const BASE_CW = 15000;
-const ZOOM_LEVELS = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0];
-let zoomIdx = 1; // default = 0.25×
-let CW = BASE_CW;
+const ZOOM_MIN = 0.1, ZOOM_MAX = 2.0;
+let currentZoom = 0.25;   // displayed zoom (lerps toward targetZoom)
+let targetZoom  = 0.25;   // where we want to be
+let CW = Math.round(BASE_CW * currentZoom);
+let zoomRafId = null;
 
-function getZoom() { return ZOOM_LEVELS[zoomIdx]; }
-function applyZoom() {
-  const zoom = getZoom();
+function getZoom() { return currentZoom; }
+
+// ── Smooth zoom animation ──
+function animateZoom() {
+  const diff = targetZoom - currentZoom;
+  if (Math.abs(diff) < 0.0005) {
+    currentZoom = targetZoom;
+    zoomRafId = null;
+    applyZoomImmediate();
+    return;
+  }
+  currentZoom += diff * 0.12;   // ease factor — feel free to tune
+  applyZoomImmediate();
+  zoomRafId = requestAnimationFrame(animateZoom);
+}
+
+function setTargetZoom(z) {
+  targetZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+  if (!zoomRafId) zoomRafId = requestAnimationFrame(animateZoom);
+}
+
+function applyZoomImmediate() {
+  const zoom = currentZoom;
   CW = Math.round(BASE_CW * zoom);
-  // keep viewport centred on the same timeline position
   const wrap = document.getElementById('canvas-wrap');
   const prevMax = parseInt(document.getElementById('canvas').style.width) || BASE_CW;
   const pct = prevMax > wrap.offsetWidth ? wrap.scrollLeft / (prevMax - wrap.offsetWidth) : 0;
+
   document.getElementById('canvas').style.width = CW + 'px';
   document.getElementById('ruler').style.width = CW + 'px';
   document.getElementById('connector-svg').style.width = CW + 'px';
-  // reposition all nodes and connectors
-  renderNodes();
-  renderConnectors();
-  // restore scroll position proportionally
+  document.querySelectorAll('.era-tick-seg').forEach(s => s.style.width = (3000 * zoom) + 'px');
+  document.querySelectorAll('.era-ruler-seg').forEach(s => s.style.width = (3000 * zoom) + 'px');
+  document.querySelectorAll('.era-bg').forEach((s,i) => { s.style.width = (3000 * zoom) + 'px'; s.style.left = (i * 3000 * zoom) + 'px'; });
+
   const newMax = CW - wrap.offsetWidth;
   targetScroll = Math.max(0, Math.min(CW - wrap.offsetWidth, pct * newMax));
   currentScroll = targetScroll;
   wrap.scrollLeft = targetScroll;
   updateScrubber();
-  // update zoom label & buttons
-  document.getElementById('zoom-level').textContent = zoom % 1 === 0 ? zoom+'×' : zoom+'×';
-  document.getElementById('zoom-out').disabled = zoomIdx === 0;
-  document.getElementById('zoom-in').disabled = zoomIdx === ZOOM_LEVELS.length - 1;
-  // re-render ticks scaled
-  document.getElementById('ticks-era1').innerHTML='';
-  document.getElementById('ticks-era2').innerHTML='';
-  document.getElementById('ticks-era3').innerHTML='';
-  document.getElementById('ticks-era4').innerHTML='';
-  document.getElementById('ticks-era5').innerHTML='';
-  const segs = document.querySelectorAll('.era-tick-seg');
-  segs.forEach(s => s.style.width = (3000 * zoom) + 'px');
-  const eraBands = document.querySelectorAll('.era-ruler-seg');
-  eraBands.forEach(s => s.style.width = (3000 * zoom) + 'px');
-  const eraBgs = document.querySelectorAll('.era-bg');
-  eraBgs.forEach((s,i) => { s.style.width = (3000 * zoom) + 'px'; s.style.left = (i * 3000 * zoom) + 'px'; });
-  renderRulerTicks();
+  renderNodes();
+  renderConnectors();
+
+  // Update slider UI
+  const frac = (zoom - ZOOM_MIN) / (ZOOM_MAX - ZOOM_MIN);
+  const sliderH = 90;
+  document.getElementById('zoom-slider-fill').style.height = (frac * sliderH) + 'px';
+  document.getElementById('zoom-slider-thumb').style.bottom = (frac * sliderH - 7) + 'px';
+  const label = zoom < 1 ? zoom.toFixed(2) + '×' : (zoom % 1 === 0 ? zoom.toFixed(0) + '×' : zoom.toFixed(2) + '×');
+  document.getElementById('zoom-level-label').textContent = label;
 }
+
+// Legacy shim so existing applyZoom() calls still work
+function applyZoom() { setTargetZoom(targetZoom); }
 function nX(e) { const segW = BASE_CW / 5 * getZoom(); return (e.era-1)*segW + e.fraction*segW; }
 function tY(t) {
   const i = ['climate','biology','society','tech'].indexOf(t);
@@ -372,49 +474,89 @@ function tY(t) {
 const EVENTS = [
   {id:1,era:1,track:'climate',fraction:0.08,turning:true,date:'65 million years ago',title:'Mass Extinction Event',what:'An asteroid impact triggered dust clouds, global cooling, and wiped out 75% of species including all non-avian dinosaurs.',cause:'Chicxulub asteroid → stratospheric dust → photosynthesis collapse → food chain collapse',effect:'Mammals freed from dinosaur dominance, filling vacant ecological niches rapidly',causes:[],effects:[2]},
   {id:2,era:1,track:'biology',fraction:0.22,turning:false,date:'60 million years ago',title:'Rise of Mammals & Primates',what:'With ecological niches vacant, mammals diversified explosively. Early primates emerged in forest canopies.',cause:'Post-extinction vacant niches → rapid mammal diversification → primate lineage emerges',effect:'Primate body plan — grasping hands, forward-facing eyes, social behavior',causes:[1],effects:[4]},
-  {id:3,era:1,track:'climate',fraction:0.46,turning:false,date:'34 million years ago',title:'Global Cooling',what:'CO₂ levels dropped, temperatures fell, and the Antarctic ice sheet formed for the first time.',cause:'CO₂ decline + tectonic shifts → polar glaciation → global temperature drop',effect:'Forest habitats fragment and contract, creating evolutionary pressure',causes:[],effects:[5]},
-  {id:4,era:1,track:'biology',fraction:0.58,turning:false,date:'23 million years ago',title:'Ape–Monkey Split',what:'The lineage separating apes from Old World monkeys diverged. Early hominoids developed larger bodies and greater cognitive capacity.',cause:'Forest canopy ecology → selection for larger brains, flexible behavior, grasping hands',effect:'Hominoid body plan established — foundational to all great apes',causes:[2],effects:[6]},
-  {id:5,era:1,track:'climate',fraction:0.86,turning:true,date:'10 million years ago',title:'African Savanna Expansion',what:'African forests contracted dramatically as the continent cooled and dried. Grasslands replaced dense forest.',cause:'Tectonic uplift + sustained cooling → rainfall decline → forest → savanna transition',effect:'Ground-based locomotion advantageous; survival pressure for bipedalism',causes:[3],effects:[6]},
-  {id:6,era:2,track:'biology',fraction:0.06,turning:true,date:'7 million years ago',title:'Human–Chimp Divergence',what:'The last common ancestor of humans and chimpanzees lived. The path toward Homo sapiens begins.',cause:'Savanna expansion + forest fragmentation → upright posture advantaged for ground travel',effect:'Hominin lineage diverges — the long road to Homo sapiens begins',causes:[4,5],effects:[7]},
-  {id:7,era:2,track:'biology',fraction:0.26,turning:true,date:'4 million years ago',title:'Bipedalism Established',what:'Australopithecus afarensis ("Lucy") walked fully upright, freeing the hands for other uses.',cause:'Savanna life → upright walking more efficient → hands freed → tool use becomes possible',effect:'Free hands can carry food, use tools, and make gestures — enabling social signaling',causes:[6],effects:[8]},
+
+  {id:4,era:1,track:'biology',fraction:0.58,turning:false,date:'23 million years ago',title:'Ape–Monkey Split',what:'The lineage separating apes from Old World monkeys diverged. Early hominoids developed larger bodies and greater cognitive capacity.',cause:'Forest canopy ecology → selection for larger brains, flexible behavior, grasping hands',effect:'Hominoid body plan established — foundational to all great apes',causes:[2,47],effects:[6,49]},
+  {id:5,era:1,track:'climate',fraction:0.86,turning:true,date:'10 million years ago',title:'African Savanna Expansion',what:'African forests contracted dramatically as the continent cooled and dried. Grasslands replaced dense forest.',cause:'Tectonic uplift + sustained cooling → rainfall decline → forest → savanna transition',effect:'Ground-based locomotion advantageous; survival pressure for bipedalism',causes:[48],effects:[6]},
+  {id:6,era:2,track:'biology',fraction:0.06,turning:true,date:'7 million years ago',title:'Human–Chimp Divergence',what:'The last common ancestor of humans and chimpanzees lived. The path toward Homo sapiens begins.',cause:'Savanna expansion + forest fragmentation → upright posture advantaged for ground travel',effect:'Hominin lineage diverges — the long road to Homo sapiens begins',causes:[4,5,51],effects:[7]},
+  {id:7,era:2,track:'biology',fraction:0.26,turning:true,date:'4 million years ago',title:'Bipedalism Established',what:'Australopithecus afarensis ("Lucy") walked fully upright, freeing the hands for other uses.',cause:'Savanna life → upright walking more efficient → hands freed → tool use becomes possible',effect:'Free hands can carry food, use tools, and make gestures — enabling social signaling',causes:[6],effects:[8,53]},
   {id:8,era:2,track:'tech',fraction:0.39,turning:true,date:'3.3 million years ago',title:'Oldowan Stone Tools',what:'The earliest known stone tools — deliberately flaked rocks for cutting — appear in East Africa.',cause:'Free hands + cognitive leap → intentional flaking of stone for sharp edges',effect:'Meat-eating increases dramatically, providing calories for brain growth',causes:[7],effects:[9]},
   {id:9,era:2,track:'biology',fraction:0.53,turning:false,date:'2 million years ago',title:'Homo Erectus — Brain Doubles',what:'Homo erectus had a brain nearly twice the size of Australopithecus and was the first hominin to leave Africa.',cause:'Improved diet + cooperative social groups → selection for larger brain',effect:'Longer childhood, more social learning, precursor behaviors to language',causes:[8],effects:[10,12]},
-  {id:10,era:2,track:'tech',fraction:0.63,turning:false,date:'1.7 million years ago',title:'Acheulean Hand Axes',what:'Symmetric, carefully shaped hand axes represent a leap in cognitive planning — visualizing a 3D form before creating it.',cause:'Larger brain → capacity for future planning → symmetric tool shaping',effect:'Hunting efficiency rises; hominins expand range across continents',causes:[9],effects:[]},
-  {id:11,era:2,track:'climate',fraction:0.73,turning:false,date:'1 million years ago',title:'Ice Age Cycles Intensify',what:'Glacial–interglacial cycles began oscillating every 100,000 years, repeatedly reshaping habitats.',cause:'Milankovitch orbital cycles → ice sheet advance and retreat → habitat instability',effect:'Migration pressure and resource stress accelerate adaptive intelligence selection',causes:[],effects:[14]},
-  {id:12,era:2,track:'tech',fraction:0.83,turning:true,date:'800,000 years ago',title:'Control of Fire',what:'Homo erectus learned to control fire — for warmth, protection, and cooking food before digestion.',cause:'Accidental fire contact → learned behavior → deliberate fire maintenance',effect:'Cooked food more calorie-dense; smaller gut frees energy for brain growth',causes:[9],effects:[13]},
+  {id:10,era:2,track:'tech',fraction:0.63,turning:false,date:'1.7 million years ago',title:'Acheulean Hand Axes',what:'Symmetric, carefully shaped hand axes represent a leap in cognitive planning — visualizing a 3D form before creating it.',cause:'Larger brain → capacity for future planning → symmetric tool shaping',effect:'Hunting efficiency rises; hominins expand range across continents',causes:[9],effects:[58]},
+  {id:11,era:2,track:'climate',fraction:0.73,turning:false,date:'1 million years ago',title:'Ice Age Cycles Intensify',what:'Glacial–interglacial cycles began oscillating every 100,000 years, repeatedly reshaping habitats.',cause:'Milankovitch orbital cycles → ice sheet advance and retreat → habitat instability',effect:'Migration pressure and resource stress accelerate adaptive intelligence selection',causes:[],effects:[14,54]},
+  {id:12,era:2,track:'tech',fraction:0.83,turning:true,date:'800,000 years ago',title:'Control of Fire',what:'Homo erectus learned to control fire — for warmth, protection, and cooking food before digestion.',cause:'Accidental fire contact → learned behavior → deliberate fire maintenance',effect:'Cooked food more calorie-dense; smaller gut frees energy for brain growth',causes:[9],effects:[13,56]},
   {id:13,era:2,track:'biology',fraction:0.93,turning:false,date:'500,000 years ago',title:'Archaic Homo Sapiens',what:'Populations show transitional features between Homo erectus and modern humans, with continued brain expansion.',cause:'Fire-enhanced diet + social learning → sustained selection for larger neocortex',effect:'Proto-language behaviors; care for injured group members; group coordination',causes:[12],effects:[14]},
-  {id:14,era:3,track:'biology',fraction:0.08,turning:false,date:'300,000 years ago',title:'Anatomically Modern Humans',what:'Homo sapiens with modern skull shape and fully developed vocal tract appear in Africa.',cause:'Continued genetic drift + selection → modern cranial structure and vocal anatomy',effect:'Full language potential now biologically possible — the hardware is ready',causes:[11,13],effects:[16,17]},
-  {id:15,era:3,track:'climate',fraction:0.26,turning:false,date:'74,000 years ago',title:'Toba Supervolcano',what:'The largest volcanic event in 2 million years caused a volcanic winter, reducing human population to near-extinction.',cause:'Massive eruption → stratospheric ash → years of cold and dark → ecosystem collapse',effect:'Genetic bottleneck; surviving groups may have been more cooperative',causes:[],effects:[]},
+  {id:14,era:3,track:'biology',fraction:0.08,turning:false,date:'300,000 years ago',title:'Anatomically Modern Humans',what:'Homo sapiens with modern skull shape and fully developed vocal tract appear in Africa.',cause:'Continued genetic drift + selection → modern cranial structure and vocal anatomy',effect:'Full language potential now biologically possible — the hardware is ready',causes:[11,13,60],effects:[16,17]},
+  {id:15,era:3,track:'climate',fraction:0.26,turning:false,date:'74,000 years ago',title:'Toba Supervolcano',what:'The largest volcanic event in 2 million years caused a volcanic winter, reducing human population to near-extinction.',cause:'Massive eruption → stratospheric ash → years of cold and dark → ecosystem collapse',effect:'Genetic bottleneck; surviving groups may have been more cooperative',causes:[],effects:[59]},
   {id:16,era:3,track:'society',fraction:0.39,turning:true,date:'70,000 years ago',title:'Cognitive Revolution',what:'An explosion in behavioral complexity — abstract thinking, planning, symbolic thought, and fiction emerge.',cause:'Possible neural rewiring or language breakthrough → capacity for imagined realities',effect:'Shared myths enable strangers to cooperate at scale — foundation of all human institutions',causes:[14],effects:[17,18]},
   {id:17,era:3,track:'tech',fraction:0.43,turning:true,date:'70,000 years ago',title:'Complex Language',what:'Full syntactic language — capable of tenses, hypotheticals, and abstract concepts — becomes the defining human technology.',cause:'Cognitive revolution + modern vocal anatomy → recursive grammar, complex communication',effect:'Knowledge transmitted across generations without genetic change — cultural evolution begins',causes:[14,16],effects:[18,19]},
-  {id:18,era:3,track:'society',fraction:0.56,turning:false,date:'60,000 years ago',title:'Out of Africa Migration',what:'Modern humans dispersed from Africa across the globe, reaching Asia, Europe, Australia, and eventually the Americas.',cause:'Language + tools + favorable climate windows → coordinated long-distance migration',effect:'Humans colonize every continent; Neanderthals and other hominins disappear',causes:[16,17],effects:[]},
-  {id:19,era:3,track:'society',fraction:0.73,turning:false,date:'40,000 years ago',title:'Cave Art & Symbolism',what:'Paintings of animals, handprints, and carved figurines appear across Europe and Asia — externalized symbolic thought.',cause:'Language + abstract cognition → desire to record and communicate beyond speech',effect:'Cultural memory stored outside the human brain for the first time',causes:[17],effects:[]},
-  {id:20,era:3,track:'climate',fraction:0.81,turning:false,date:'20,000 years ago',title:'Last Glacial Maximum',what:'Ice sheets reached their greatest extent, lowering sea levels by 120 meters and creating land bridges.',cause:'Milankovitch cycles → peak glaciation → sea level drop → exposed land bridges',effect:'Americas colonized via Beringia; humans adapt to extreme cold environments',causes:[],effects:[22]},
-  {id:21,era:3,track:'tech',fraction:0.86,turning:false,date:'15,000 years ago',title:'Bow, Nets & Boats',what:'Compound tools — requiring multiple components and planning — appear globally: bows, fishnets, dugout canoes.',cause:'Abstract planning capacity → designing tools made of multiple interdependent parts',effect:'Hunting and fishing efficiency leaps; coastal environments become accessible',causes:[],effects:[23]},
+  {id:18,era:3,track:'society',fraction:0.56,turning:false,date:'60,000 years ago',title:'Out of Africa Migration',what:'Modern humans dispersed from Africa across the globe, reaching Asia, Europe, Australia, and eventually the Americas.',cause:'Language + tools + favorable climate windows → coordinated long-distance migration',effect:'Humans colonize every continent; Neanderthals and other hominins disappear',causes:[16,17],effects:[62]},
+  {id:19,era:3,track:'society',fraction:0.73,turning:false,date:'40,000 years ago',title:'Cave Art & Symbolism',what:'Paintings of animals, handprints, and carved figurines appear across Europe and Asia — externalized symbolic thought.',cause:'Language + abstract cognition → desire to record and communicate beyond speech',effect:'Cultural memory stored outside the human brain for the first time',causes:[17,61],effects:[]},
+  {id:20,era:3,track:'climate',fraction:0.81,turning:false,date:'20,000 years ago',title:'Last Glacial Maximum',what:'Ice sheets reached their greatest extent, lowering sea levels by 120 meters and creating land bridges.',cause:'Milankovitch cycles → peak glaciation → sea level drop → exposed land bridges',effect:'Americas colonized via Beringia; humans adapt to extreme cold environments',causes:[63],effects:[22]},
+  {id:21,era:3,track:'tech',fraction:0.86,turning:false,date:'15,000 years ago',title:'Bow, Nets & Boats',what:'Compound tools — requiring multiple components and planning — appear globally: bows, fishnets, dugout canoes.',cause:'Abstract planning capacity → designing tools made of multiple interdependent parts',effect:'Hunting and fishing efficiency leaps; coastal environments become accessible',causes:[],effects:[23,64]},
   {id:22,era:3,track:'climate',fraction:0.95,turning:true,date:'11,700 years ago',title:'Holocene — Climate Stabilizes',what:'The last ice age ended, ushering in unprecedented climate stability that has lasted to the present day.',cause:'Orbital warming → ice sheets retreat → CO₂ rises → stable, predictable seasons emerge',effect:'Reliable growing seasons make agriculture viable for the first time',causes:[20],effects:[23]},
-  {id:23,era:4,track:'tech',fraction:0.06,turning:true,date:'10,000 years ago',title:'Neolithic Revolution',what:'Independent domestication of crops in Mesopotamia, China, Mesoamerica, and Africa transforms human subsistence.',cause:'Stable Holocene climate + wild grass variants + sedentary behavior → deliberate cultivation',effect:'Food surplus → population growth → settlements → specialization → social hierarchy',causes:[21,22],effects:[24]},
-  {id:24,era:4,track:'society',fraction:0.19,turning:false,date:'9,000 years ago',title:'Permanent Settlements',what:'Villages of hundreds replaced nomadic bands. Dogs, sheep, cattle, and pigs were domesticated.',cause:'Food surplus → no need to follow herds → permanent structures → village formation',effect:'Division of labor; property and inheritance create social hierarchy',causes:[23],effects:[25,26]},
+  {id:23,era:4,track:'tech',fraction:0.06,turning:true,date:'10,000 years ago',title:'Neolithic Revolution',what:'Independent domestication of crops in Mesopotamia, China, Mesoamerica, and Africa transforms human subsistence.',cause:'Stable Holocene climate + wild grass variants + sedentary behavior → deliberate cultivation',effect:'Food surplus → population growth → settlements → specialization → social hierarchy',causes:[21,22,64],effects:[24]},
+  {id:24,era:4,track:'society',fraction:0.19,turning:false,date:'9,000 years ago',title:'Permanent Settlements',what:'Villages of hundreds replaced nomadic bands. Dogs, sheep, cattle, and pigs were domesticated.',cause:'Food surplus → no need to follow herds → permanent structures → village formation',effect:'Division of labor; property and inheritance create social hierarchy',causes:[23],effects:[25,26,65,66,67]},
   {id:25,era:4,track:'tech',fraction:0.36,turning:true,date:'5,500 years ago',title:'Writing Invented',what:'Cuneiform script in Mesopotamia and hieroglyphs in Egypt emerged to track grain, taxes, and trade.',cause:'Trade complexity + population scale → need for records beyond human memory → symbols standardize',effect:'Laws, history, mathematics, and science become possible',causes:[24],effects:[26,28]},
   {id:26,era:4,track:'society',fraction:0.43,turning:false,date:'5,000 years ago',title:'First Cities & States',what:'Uruk in Mesopotamia and Memphis in Egypt grew to tens of thousands — the first true urban civilizations.',cause:'Writing + food surplus + hierarchy → centralized governance, taxation, and specialized labor',effect:'Standing armies, monumental architecture, long-distance trade, and state religion emerge',causes:[24,25],effects:[27,28]},
-  {id:27,era:4,track:'tech',fraction:0.51,turning:false,date:'4,500 years ago',title:'Bronze Metallurgy',what:'Alloying copper and tin produced bronze — far harder than either metal alone.',cause:'Trade networks → access to multiple metals → experimental alloying → controlled smelting',effect:'Military advantage for bronze-equipped states drives empire expansion',causes:[26],effects:[]},
+  {id:27,era:4,track:'tech',fraction:0.51,turning:false,date:'4,500 years ago',title:'Bronze Metallurgy',what:'Alloying copper and tin produced bronze — far harder than either metal alone.',cause:'Trade networks → access to multiple metals → experimental alloying → controlled smelting',effect:'Military advantage for bronze-equipped states drives empire expansion',causes:[26,67],effects:[29,71]},
   {id:28,era:4,track:'society',fraction:0.56,turning:false,date:'4,500 years ago',title:'Great Pyramid of Giza',what:'Built over 20 years using ~2.3 million stone blocks — demonstrating the organizational capacity of early states.',cause:'Centralized state + writing + engineering knowledge + massive labor mobilization',effect:'Demonstrates what coordinated human effort under institutional organization can achieve',causes:[25,26],effects:[]},
-  {id:29,era:4,track:'tech',fraction:0.65,turning:false,date:'3,000 years ago',title:'Iron Age Begins',what:'Iron smelting produced cheaper and more abundant metal than bronze, democratizing tools and weapons.',cause:'Bronze scarcity + trade disruption → experimentation with iron ore → smelting techniques',effect:'Agriculture and warfare no longer require elite access to metals; populations expand',causes:[],effects:[]},
-  {id:30,era:4,track:'society',fraction:0.73,turning:true,date:'2,500 years ago',title:'Axial Age — Philosophy',what:'Confucius, Buddha, Socrates, and the Hebrew prophets all lived within a few centuries — a global flowering of moral philosophy.',cause:'Literate urban elites + leisure + existential questions prompted by empire and mortality',effect:'Hinduism, Buddhism, Greek philosophy, and monotheism spread across continents',causes:[25],effects:[31]},
-  {id:31,era:4,track:'society',fraction:0.83,turning:false,date:'2,000 years ago',title:'Roman Empire at Peak',what:'At its height, Rome governed 70 million people across 5 million km² — the largest unified political system in Western history.',cause:'Military innovation + legal systems + roads + common language → unprecedented territorial control',effect:'Roman law, Latin language, and administrative models persist in European civilization today',causes:[30],effects:[]},
-  {id:32,era:4,track:'society',fraction:0.91,turning:false,date:'700 CE',title:'Islamic Golden Age',what:'From Baghdad to Cordoba, Islamic scholars translated, preserved, and extended Greek, Persian, and Indian knowledge.',cause:'Unified caliphate + trade wealth + deliberate translation movement → scholarly institutions',effect:'Algebra, optics, medicine, and astronomy advance; ancient knowledge survives',causes:[],effects:[35]},
-  {id:33,era:4,track:'tech',fraction:0.97,turning:true,date:'1450 CE',title:'Gutenberg Printing Press',what:'Movable type printing made book production 1000× cheaper and faster, making mass literacy economically viable.',cause:'Paper availability + metalworking + wine press mechanics → movable type system',effect:'Protestant Reformation, Scientific Revolution, and mass literacy follow within 150 years',causes:[],effects:[34,35]},
-  {id:34,era:5,track:'society',fraction:0.07,turning:false,date:'1500 CE',title:'Age of Exploration',what:'European powers sailed to the Americas, sub-Saharan Africa, and Asia, connecting the globe for the first time.',cause:'Navigation technology + printing + economic competition → state-sponsored global voyaging',effect:'Columbian Exchange; global trade networks permanently established',causes:[33],effects:[36]},
-  {id:35,era:5,track:'tech',fraction:0.13,turning:true,date:'1543–1687 CE',title:'Scientific Revolution',what:'From Copernicus to Newton, a new method — hypothesis, experiment, mathematics — replaced authority with evidence.',cause:'Printing press + observational instruments + economic support → systematic empiricism',effect:'Mathematical understanding of nature replaces dogma as the basis for knowledge',causes:[32,33],effects:[37]},
+  {id:29,era:4,track:'tech',fraction:0.65,turning:false,date:'3,000 years ago',title:'Iron Age Begins',what:'Iron smelting produced cheaper and more abundant metal than bronze, democratizing tools and weapons.',cause:'Bronze scarcity + trade disruption → experimentation with iron ore → smelting techniques',effect:'Agriculture and warfare no longer require elite access to metals; populations expand',causes:[71],effects:[30]},
+  {id:30,era:4,track:'society',fraction:0.73,turning:true,date:'2,500 years ago',title:'Axial Age — Philosophy',what:'Confucius, Buddha, Socrates, and the Hebrew prophets all lived within a few centuries — a global flowering of moral philosophy.',cause:'Literate urban elites + leisure + existential questions prompted by empire and mortality',effect:'Hinduism, Buddhism, Greek philosophy, and monotheism spread across continents',causes:[25,29],effects:[31,72]},
+  {id:31,era:4,track:'society',fraction:0.83,turning:false,date:'2,000 years ago',title:'Roman Empire at Peak',what:'At its height, Rome governed 70 million people across 5 million km² — the largest unified political system in Western history.',cause:'Military innovation + legal systems + roads + common language → unprecedented territorial control',effect:'Roman law, Latin language, and administrative models persist in European civilization today',causes:[30,72],effects:[32]},
+  {id:32,era:4,track:'society',fraction:0.91,turning:false,date:'700 CE',title:'Islamic Golden Age',what:'From Baghdad to Cordoba, Islamic scholars translated, preserved, and extended Greek, Persian, and Indian knowledge.',cause:'Unified caliphate + trade wealth + deliberate translation movement → scholarly institutions',effect:'Algebra, optics, medicine, and astronomy advance; ancient knowledge survives',causes:[31],effects:[35]},
+  {id:33,era:4,track:'tech',fraction:0.97,turning:true,date:'1450 CE',title:'Gutenberg Printing Press',what:'Movable type printing made book production 1000× cheaper and faster, making mass literacy economically viable.',cause:'Paper availability + metalworking + wine press mechanics → movable type system',effect:'Protestant Reformation, Scientific Revolution, and mass literacy follow within 150 years',causes:[73],effects:[34,35,75]},
+  {id:34,era:5,track:'society',fraction:0.07,turning:false,date:'1500 CE',title:'Age of Exploration',what:'European powers sailed to the Americas, sub-Saharan Africa, and Asia, connecting the globe for the first time.',cause:'Navigation technology + printing + economic competition → state-sponsored global voyaging',effect:'Columbian Exchange; global trade networks permanently established',causes:[33],effects:[36,74]},
+  {id:35,era:5,track:'tech',fraction:0.19,turning:true,date:'1543–1687 CE',title:'Scientific Revolution',what:'From Copernicus to Newton, a new method — hypothesis, experiment, mathematics — replaced authority with evidence.',cause:'Printing press + observational instruments + economic support → systematic empiricism',effect:'Mathematical understanding of nature replaces dogma as the basis for knowledge',causes:[32,33],effects:[37]},
   {id:36,era:5,track:'society',fraction:0.21,turning:false,date:'1600–1800 CE',title:'Colonialism & Capitalism',what:'European empires extracted resources from the Americas, Africa, and Asia, accumulating capital that would fuel industrialization.',cause:'Exploration + military technology + mercantile economics → systematic empire-building',effect:'Global wealth concentration; Atlantic trade networks; enslaved labor builds industrial capital',causes:[34],effects:[37]},
   {id:37,era:5,track:'tech',fraction:0.39,turning:true,date:'1760–1840 CE',title:'Industrial Revolution',what:'Steam engines powered by coal mechanized production, transforming Britain and then the world from agrarian to industrial economies.',cause:'Coal energy + scientific method + accumulated capital + textile demand → mechanical power',effect:'Mass production, urbanization, and the fossil fuel economy begin simultaneously',causes:[35,36],effects:[38,40]},
-  {id:38,era:5,track:'climate',fraction:0.49,turning:false,date:'~1800 CE',title:'Anthropocene Begins',what:'Human industrial activity begins measurably altering Earth\'s atmosphere — the first planetary-scale human impact on climate.',cause:'Industrial coal burning → CO₂ accumulation in atmosphere → greenhouse warming',effect:'Global temperatures begin rising; the feedback loop of human civilization on climate is established',causes:[37],effects:[]},
-  {id:39,era:5,track:'biology',fraction:0.53,turning:false,date:'1859 CE',title:'Darwin — Theory of Evolution',what:'On the Origin of Species unified biology under a single explanatory framework: all life connected by descent with modification.',cause:'Scientific method + fossil record + breeding observations + Malthus → natural selection framework',effect:'Humans understand their own biological origin for the first time; medicine and genetics follow',causes:[35],effects:[]},
+  {id:38,era:5,track:'climate',fraction:0.49,turning:false,date:'~1800 CE',title:'Anthropocene Begins',what:'Human industrial activity begins measurably altering Earth\'s atmosphere — the first planetary-scale human impact on climate.',cause:'Industrial coal burning → CO₂ accumulation in atmosphere → greenhouse warming',effect:'Global temperatures begin rising; the feedback loop of human civilization on climate is established',causes:[37,76],effects:[79]},
+  {id:39,era:5,track:'biology',fraction:0.53,turning:false,date:'1859 CE',title:'Darwin — Theory of Evolution',what:'On the Origin of Species unified biology under a single explanatory framework: all life connected by descent with modification.',cause:'Scientific method + fossil record + breeding observations + Malthus → natural selection framework',effect:'Humans understand their own biological origin for the first time; medicine and genetics follow',causes:[35],effects:[77]},
   {id:40,era:5,track:'tech',fraction:0.61,turning:true,date:'1870–1900 CE',title:'Electricity & Telegraph',what:'Electrical grids, light bulbs, and telegraph cables transformed energy distribution and communication simultaneously.',cause:'Maxwell\'s electromagnetic theory → practical generation, transmission, and application',effect:'Information travels faster than physical movement for the first time in history',causes:[37],effects:[41]},
   {id:41,era:5,track:'tech',fraction:0.76,turning:true,date:'1945 CE',title:'Nuclear Age & First Computer',what:'WWII produced both nuclear weapons and ENIAC — the first programmable electronic computer — in the same decade.',cause:'War urgency + physics breakthroughs + engineering scale → convergence of atomic and digital technology',effect:'Programmable logic machines established; existential risk era begins; Cold War drives technology race',causes:[40],effects:[42,44]},
-  {id:42,era:5,track:'tech',fraction:0.82,turning:false,date:'1957 CE',title:'Space Age — Sputnik',what:'The Soviet Sputnik satellite was the first human-made object to orbit Earth, initiating the space race.',cause:'Cold War competition + WWII rocketry + computer navigation → orbit achieved',effect:'Satellites, GPS, weather forecasting, and global communications infrastructure follow',causes:[41],effects:[]},
+  {id:42,era:5,track:'tech',fraction:0.82,turning:false,date:'1957 CE',title:'Space Age — Sputnik',what:'The Soviet Sputnik satellite was the first human-made object to orbit Earth, initiating the space race.',cause:'Cold War competition + WWII rocketry + computer navigation → orbit achieved',effect:'Satellites, GPS, weather forecasting, and global communications infrastructure follow',causes:[41],effects:[43]},
   {id:43,era:5,track:'society',fraction:0.86,turning:false,date:'1969 CE',title:'Moon Landing',what:'Neil Armstrong and Buzz Aldrin landed on the Moon — the first time any species left its home planet.',cause:'Political will + computers + rockets + 400,000 engineers → lunar landing achieved',effect:'Demonstrates the organizational and technological ceiling of coordinated human ambition',causes:[42],effects:[]},
-  {id:44,era:5,track:'tech',fraction:0.92,turning:true,date:'1991 CE',title:'World Wide Web',what:'Tim Berners-Lee\'s hypertext system became the public internet — connecting every human\'s knowledge to every other.',cause:'Military network + hypertext protocol + browser software → open global information access',effect:'Knowledge fully democratized; global nervous system forms; information economy begins',causes:[41],effects:[45]},
+  {id:44,era:5,track:'tech',fraction:0.92,turning:true,date:'1991 CE',title:'World Wide Web',what:'Tim Berners-Lee\'s hypertext system became the public internet — connecting every human\'s knowledge to every other.',cause:'Military network + hypertext protocol + browser software → open global information access',effect:'Knowledge fully democratized; global nervous system forms; information economy begins',causes:[41,78],effects:[45]},
   {id:45,era:5,track:'tech',fraction:0.98,turning:true,date:'2012 — Present',title:'AI',what:'Neural networks trained on vast data began outperforming humans at perception, language, and reasoning tasks.',cause:'Big data + GPU computing + decades of neural network research → machines learn from examples',effect:'The first time intelligence itself is being engineered — culmination of 65 million years of biological evolution',causes:[44],effects:[]},
+  // ── ERA 1 NEW EVENTS ──
+  {id:46,era:1,track:'climate',fraction:0.22,turning:false,date:'56 million years ago',title:'Paleocene-Eocene Thermal Maximum',what:'A sudden release of carbon into the atmosphere raised global temperatures by 5–8°C in under 20,000 years — the closest ancient analogue to modern climate change.',cause:'Massive volcanic activity or seafloor methane release → rapid greenhouse warming → ocean acidification',effect:'Mass marine extinction; accelerated mammal evolution in warmer ecosystems; took 200,000 years to recover',causes:[],effects:[47]},
+  {id:47,era:1,track:'biology',fraction:0.30,turning:false,date:'52 million years ago',title:'First Primates Diversify',what:'After the K-Pg extinction cleared ecological space and PETM warming expanded tropical forests, small tree-dwelling primates radiated into dozens of new species.',cause:'Warm climate + vacant canopy niches → rapid adaptive radiation of primate lineages',effect:'Establishes the primate body plan — grasping hands, forward-facing eyes, large brains relative to body size',causes:[2,46],effects:[4]},
+  {id:48,era:1,track:'climate',fraction:0.45,turning:false,date:'34 million years ago',title:'Antarctic Ice Sheet Forms',what:'A permanent ice sheet formed on Antarctica as atmospheric CO₂ fell and the Drake Passage opened, fundamentally changing global ocean circulation.',cause:'Continental drift → Drake Passage opens → Antarctic Circumpolar Current isolates continent → cooling',effect:'Triggers long-term global cooling trend; sets conditions for eventual Pleistocene Ice Ages',causes:[],effects:[5,52]},
+  {id:49,era:1,track:'biology',fraction:0.62,turning:false,date:'20 million years ago',title:'Hominoid Apes Emerge',what:'The ape lineage — lacking tails, with larger brains and more flexible shoulders — diverges from Old World monkeys and begins its spread across Africa and Eurasia.',cause:'Cooling + forest fragmentation → selective pressure for larger bodies and more flexible locomotion',effect:'Establishes the ancestral body plan from which gibbons, orangutans, gorillas, chimps, and humans descend',causes:[4],effects:[6]},
+
+  // ── ERA 2 NEW EVENTS ──
+  {id:51,era:2,track:'biology',fraction:0.08,turning:false,date:'6.5 million years ago',title:'Last Common Ancestor with Chimps',what:'The lineage that would become humans diverges from the lineage that becomes chimpanzees — our closest living relatives share ~98.7% of our DNA.',cause:'Forest fragmentation + geographic separation → reproductive isolation → divergent evolution',effect:'The hominin lineage begins its 6-million-year journey toward modern humans',causes:[5,50],effects:[6,7]},
+  {id:52,era:2,track:'climate',fraction:0.20,turning:false,date:'4.5 million years ago',title:'Pliocene Cooling',what:'A sustained drop in global temperatures dried out East Africa, fragmenting forests and creating the mosaic landscape of woodland and grassland that challenged early hominins.',cause:'Reduction in atmospheric CO₂ + closure of Panama seaway alters ocean circulation → cooling',effect:'Hominins forced to adapt to open environments → bipedalism and dietary flexibility selected for',causes:[48],effects:[7,54]},
+  {id:53,era:2,track:'biology',fraction:0.50,turning:false,date:'3.2 million years ago',title:'Lucy — Australopithecus afarensis',what:'A 3.2-million-year-old skeleton found in Ethiopia demonstrates a species that walked upright but had an ape-sized brain — proving bipedalism preceded large brains.',cause:'Savanna life → freeing hands for carrying → upright posture selected over millions of years',effect:'Establishes that human-like locomotion is ancient; brain expansion came much later',causes:[7,52],effects:[8]},
+  {id:54,era:2,track:'climate',fraction:0.47,turning:true,date:'2.6 million years ago',title:'Pleistocene Ice Ages Begin',what:'Earth enters a cycle of ice ages and warm interglacials driven by Milankovitch orbital cycles — alternating between glaciated and temperate conditions every ~100,000 years.',cause:'Long-term cooling + orbital forcing → ice sheet growth → albedo feedback → glacial cycles',effect:'Repeated environmental stress drives rapid hominin evolution; multiple species emerge and go extinct',causes:[48,52],effects:[11,55]},
+  {id:55,era:2,track:'biology',fraction:0.60,turning:false,date:'1.8 million years ago',title:'Homo erectus — Out of Africa I',what:'Homo erectus — taller, bigger-brained, and more capable than predecessors — spread from Africa to the Caucasus, South Asia, and Southeast Asia.',cause:'Larger brains + better tools + fire → ability to survive in new climates → range expansion',effect:'First hominin to leave Africa; demonstrates early human adaptability and mobility across continents',causes:[9,54],effects:[12,13]},
+  {id:56,era:2,track:'tech',fraction:0.75,turning:false,date:'1 million years ago',title:'Controlled Use of Fire',what:'Evidence from South Africa\'s Wonderwerk Cave suggests hominins were controlling fire at least 1 million years ago — cooking food, providing warmth, and deterring predators.',cause:'Proximity to natural fire events + cognitive capacity to observe and replicate → deliberate fire use',effect:'Cooking increases caloric extraction → brain growth accelerates; social life around hearths begins',causes:[12,55],effects:[13,14]},
+  // ── ERA 3 NEW EVENTS ──
+  {id:57,era:3,track:'biology',fraction:0.10,turning:false,date:'280,000 years ago',title:'Neanderthals at Their Peak',what:'Neanderthals dominated Europe and western Asia for over 300,000 years — burying their dead, using tools, caring for the injured, and likely communicating with language.',cause:'Cold-adapted evolution → stocky bodies, large brains, sophisticated Mousterian tool culture',effect:'A parallel human species that would interbreed with modern humans before going extinct',causes:[],effects:[62]},
+  {id:58,era:3,track:'tech',fraction:0.14,turning:false,date:'230,000 years ago',title:'Hafting — Composite Tools',what:'Hominins began attaching stone points to wooden shafts using adhesives like birch tar — the first multi-component tools requiring planning across time.',cause:'Increased working memory + planning ability → designing tools with separate, interdependent parts',effect:'Spears become longer-range weapons; demonstrates abstract thinking about future tool use',causes:[10],effects:[61]},
+  {id:59,era:3,track:'climate',fraction:0.18,turning:false,date:'195,000 years ago',title:'Near-Extinction Bottleneck',what:'Around 195,000 years ago, a severe glacial period may have reduced the human population to just a few thousand individuals surviving near South Africa\'s coast.',cause:'Glacial cooling → African interior desiccates → coastal refugia become the last habitable zones',effect:'Near-extinction event; genetic diversity of all living humans traces to a very small founding population',causes:[15],effects:[60]},
+  {id:60,era:3,track:'biology',fraction:0.16,turning:true,date:'200,000 years ago',title:'Homo sapiens — Anatomically Modern',what:'Fossils from Jebel Irhoud, Morocco and Omo Kibish, Ethiopia show the first skulls with fully modern anatomy — high foreheads, small faces, rounded braincases.',cause:'Continued selection for larger prefrontal cortex + reduced brow ridges → modern skull morphology',effect:'The body plan of every human alive today is established; behavioral modernity follows within 100,000 years',causes:[59],effects:[14,16]},
+  {id:61,era:3,track:'tech',fraction:0.35,turning:false,date:'90,000 years ago',title:'Ochre, Beads & Pigment',what:'Deliberately perforated shell beads and ochre pigment from Blombos Cave (South Africa) show humans decorating bodies and objects ~100,000 years ago — the earliest symbolic behavior.',cause:'Language capacity → desire to signal identity, group membership, and status through decoration',effect:'Symbolic thought becomes externalized; the foundation of art, religion, and culture',causes:[58],effects:[19]},
+  {id:62,era:3,track:'society',fraction:0.63,turning:false,date:'40,000 years ago',title:'Neanderthal Extinction',what:'Neanderthals disappeared from the fossil record ~40,000 years ago — likely due to competition, climate stress, and absorption into modern human populations (we carry 1–4% Neanderthal DNA).',cause:'Arrival of modern humans + superior social networks + climate variability → population collapse',effect:'Homo sapiens becomes the last surviving human species on Earth for the first time',causes:[18,57],effects:[]},
+  {id:63,era:3,track:'climate',fraction:0.72,turning:false,date:'30,000 years ago',title:'Glacial Maximum Approaches',what:'As glaciers advanced, sea levels dropped and the climate became colder and drier globally — humans had to adapt or die, driving behavioral and technological innovation.',cause:'Orbital forcing → ice sheet growth → albedo feedback → peak glaciation conditions',effect:'Pressure to innovate intensifies; diverse regional tool traditions emerge across surviving populations',causes:[],effects:[20]},
+  {id:64,era:3,track:'tech',fraction:0.90,turning:false,date:'15,000 years ago',title:'Dogs Domesticated',what:'Wolves began associating with human hunter-gatherer camps, initiating a domestication process that produced dogs — the first domesticated animal and humanity\'s oldest partner.',cause:'Bold wolves that tolerated humans gained access to scraps → self-domestication → selective breeding',effect:'First human-animal partnership; dogs assist in hunting, guarding, and herding — amplifying human capability',causes:[21],effects:[23,65]},
+  // ── ERA 4 NEW EVENTS ──
+  {id:65,era:4,track:'biology',fraction:0.10,turning:false,date:'9,500 years ago',title:'Livestock Domestication',what:'Sheep, goats, cattle, and pigs were domesticated in the Near East — providing reliable protein, labor power, and eventually a reservoir for new diseases.',cause:'Settled villages + surplus food thinking → deliberate breeding of manageable wild species',effect:'Muscle power for agriculture; wool and milk as new resources; zoonotic disease risk created',causes:[24,64],effects:[69]},
+  {id:66,era:4,track:'climate',fraction:0.24,turning:false,date:'8,200 years ago',title:'8.2K Cooling Event',what:'A catastrophic freshwater pulse from melting glaciers shut down Atlantic circulation, causing ~160 years of sudden cooling — disrupting early agricultural communities.',cause:'Laurentide ice sheet collapse → cold freshwater floods Atlantic → thermohaline circulation slows',effect:'Agricultural communities stressed; possible driver of early population movement and adaptation',causes:[22],effects:[]},
+  {id:67,era:4,track:'society',fraction:0.31,turning:false,date:'7,000 years ago',title:'Long-Distance Trade Networks',what:'By 7,000 years ago, obsidian from Anatolia, shells from the Persian Gulf, and copper from Cyprus were moving across thousands of kilometers — creating the first interregional economies.',cause:'Surplus production + specialization + demand for non-local materials → regular exchange routes',effect:'Ideas, diseases, crops, and technologies spread along trade routes; cultural diffusion accelerates',causes:[24],effects:[27,68]},
+  {id:68,era:4,track:'tech',fraction:0.40,turning:false,date:'5,500 years ago',title:'Wheel Invented',what:'The potter\'s wheel (~3500 BCE) preceded the transport wheel — both appeared in Mesopotamia and rapidly transformed manufacturing and logistics.',cause:'Observation of rolling objects + axle mechanics + metallurgy → practical rotating tools',effect:'Bulk goods transport becomes viable; warfare with chariots; pottery production scales dramatically',causes:[25,67],effects:[26]},
+  {id:69,era:4,track:'biology',fraction:0.47,turning:false,date:'5,000 years ago',title:'First Epidemic Diseases',what:'Dense urban populations living with livestock created the conditions for the first epidemic diseases — measles, smallpox, and plague all emerge from animal reservoirs in this period.',cause:'Urbanization + livestock proximity + no prior immunity → zoonotic spillover at scale',effect:'Disease becomes a major force in history; population collapses; immunity differences shape conquest',causes:[65,26],effects:[73]},
+  {id:70,era:4,track:'society',fraction:0.60,turning:false,date:'4,000 years ago',title:'Law Codes — Hammurabi',what:'The Code of Hammurabi (~1754 BCE) — 282 laws carved in stone — is one of the earliest written legal systems, governing trade, property, family, and crime.',cause:'Complex urban society + writing + state power → need for standardized rules enforceable at scale',effect:'Legal systems become the technology of social order; rule of law concept emerges',causes:[25,26],effects:[]},
+  {id:71,era:4,track:'climate',fraction:0.62,turning:false,date:'3,200 years ago',title:'Late Bronze Age Collapse',what:'Around 1200 BCE, nearly every major civilization in the Eastern Mediterranean — Mycenaeans, Hittites, Ugarit — collapsed within decades, linked to drought and the mysterious "Sea Peoples."',cause:'Prolonged drought + disrupted trade networks + migration pressure → simultaneous systemic failure',effect:'Writing systems lost; populations plummet; a centuries-long dark age follows before recovery',causes:[27],effects:[29]},
+  {id:72,era:4,track:'society',fraction:0.78,turning:false,date:'2,300 years ago',title:'Alexander & Hellenistic World',what:'Alexander the Great\'s conquests spread Greek language, philosophy, and science from Egypt to India, creating the first intentional cultural globalization project.',cause:'Macedonian military innovation + Greek intellectual culture + ambition → rapid empire expansion',effect:'Greek becomes the lingua franca of the ancient world; scientific and philosophical exchange accelerates',causes:[30],effects:[31,32]},
+  {id:73,era:4,track:'biology',fraction:0.94,turning:false,date:'1347 CE',title:'Black Death',what:'Bubonic plague killed 30–60% of Europe\'s population between 1347–1353 — the deadliest pandemic in human history relative to total population.',cause:'Yersinia pestis bacterium + trade route spread + urban density + no medical knowledge → catastrophic mortality',effect:'Labor scarcity empowers surviving peasants; feudalism weakens; Renaissance conditions created',causes:[69],effects:[33,34]},
+  // ── ERA 5 NEW EVENTS ──
+  {id:74,era:5,track:'biology',fraction:0.17,turning:false,date:'1520 CE',title:'Columbian Exchange & New World Disease',what:'European contact with the Americas triggered the greatest biological exchange in human history — and a demographic catastrophe, with diseases killing 50–90% of Indigenous populations within a century.',cause:'Contact between long-isolated disease pools → no immunity in New World populations → epidemic cascade',effect:'Population collapse reshapes the Americas; ecological niches open; African slave trade accelerates to replace labor',causes:[34,69],effects:[36]},
+  {id:75,era:5,track:'society',fraction:0.30,turning:false,date:'1688–1789 CE',title:'Democratic Revolutions',what:'The English Glorious Revolution (1688), American Revolution (1776), and French Revolution (1789) established that political legitimacy comes from the people, not divine right.',cause:'Printing press + Enlightenment philosophy + mercantile middle class + taxation grievances → revolution',effect:'Constitutional government, human rights, and the nation-state model spread globally over 200 years',causes:[33,35],effects:[78]},
+  {id:76,era:5,track:'climate',fraction:0.51,turning:false,date:'1816 CE',title:'Year Without a Summer',what:'The 1815 eruption of Mount Tambora injected so much ash into the stratosphere that 1816 saw crop failures, famine, and mass migration across the Northern Hemisphere.',cause:'Massive volcanic eruption → stratospheric aerosols → global temperature drop of ~0.4–0.7°C for a year',effect:'Famine-driven migration; Mary Shelley writes Frankenstein during the gloomy summer; early climate awareness',causes:[],effects:[38]},
+  {id:77,era:5,track:'biology',fraction:0.63,turning:false,date:'1928 CE',title:'Penicillin & Antibiotic Era',what:'Alexander Fleming\'s discovery of penicillin in 1928, followed by mass production in WWII, launched an era when bacterial infections — previously the leading cause of death — became treatable.',cause:'Scientific method + accidental observation + wartime urgency → mass pharmaceutical production',effect:'Life expectancy surges globally; surgery becomes safe; population explosion accelerates',causes:[35,39],effects:[80]},
+  {id:78,era:5,track:'society',fraction:0.67,turning:false,date:'1945–1991 CE',title:'Cold War & Decolonization',what:'Post-WWII, over 80 nations gained independence from European empires while the US and USSR competed for global influence — reshaping the entire world map in under 50 years.',cause:'WWII weakening of European powers + nationalist movements + US/Soviet anti-colonial rhetoric → independence waves',effect:'New nations struggle with imposed borders; Cold War proxy conflicts; non-aligned movement emerges',causes:[36,75],effects:[44]},
+  {id:79,era:5,track:'climate',fraction:0.87,turning:true,date:'1988 CE',title:'Climate Crisis Recognized',what:'NASA scientist James Hansen\'s 1988 Senate testimony declared with scientific confidence that human-caused climate change had begun — catalyzing the modern climate movement.',cause:'Decades of CO₂ data + climate modeling + temperature records → scientific consensus on anthropogenic warming',effect:'IPCC established; Kyoto Protocol; Paris Agreement; global political struggle over fossil fuels begins',causes:[38],effects:[]},
+  {id:80,era:5,track:'biology',fraction:0.95,turning:false,date:'2003 CE',title:'Human Genome Sequenced',what:'The Human Genome Project\'s 2003 completion mapped all ~3 billion base pairs of human DNA — opening the door to genetic medicine, CRISPR, and synthetic biology.',cause:'Computing power + DNA sequencing technology + international scientific collaboration → full genome map',effect:'Personalized medicine; gene therapy; CRISPR editing of living organisms; understanding of hereditary disease',causes:[77,39],effects:[]},
 ];
 
 // ══ STARFIELD ══
@@ -843,26 +985,78 @@ function renderRulerTicks() {
   });
 }
 
-// ══ ZOOM ══
+// ══ ZOOM WIDGET ══
+const ZOOM_STEP = 0.15; // per button click
+
 document.getElementById('zoom-in').addEventListener('click', () => {
-  if (zoomIdx < ZOOM_LEVELS.length - 1) { zoomIdx++; applyZoom(); }
+  setTargetZoom(targetZoom + ZOOM_STEP);
 });
 document.getElementById('zoom-out').addEventListener('click', () => {
-  if (zoomIdx > 0) { zoomIdx--; applyZoom(); }
+  setTargetZoom(targetZoom - ZOOM_STEP);
 });
+
+// Slider drag
+(function() {
+  const thumb = document.getElementById('zoom-slider-thumb');
+  const track = document.getElementById('zoom-slider-track');
+  let dragging = false, startY = 0, startZoom = 0;
+
+  function fracFromY(clientY) {
+    const rect = track.getBoundingClientRect();
+    const relY = clientY - rect.top;
+    const frac = 1 - Math.max(0, Math.min(1, relY / rect.height));
+    return frac;
+  }
+
+  thumb.addEventListener('mousedown', e => {
+    dragging = true;
+    startY = e.clientY;
+    startZoom = targetZoom;
+    thumb.classList.add('dragging');
+    e.preventDefault();
+  });
+  track.addEventListener('mousedown', e => {
+    if (e.target === thumb) return;
+    const frac = fracFromY(e.clientY);
+    setTargetZoom(ZOOM_MIN + frac * (ZOOM_MAX - ZOOM_MIN));
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const frac = fracFromY(e.clientY);
+    setTargetZoom(ZOOM_MIN + frac * (ZOOM_MAX - ZOOM_MIN));
+  });
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    thumb.classList.remove('dragging');
+  });
+
+  // Touch support
+  thumb.addEventListener('touchstart', e => {
+    dragging = true;
+    thumb.classList.add('dragging');
+    e.preventDefault();
+  }, {passive:false});
+  window.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const frac = fracFromY(e.touches[0].clientY);
+    setTargetZoom(ZOOM_MIN + frac * (ZOOM_MAX - ZOOM_MIN));
+  }, {passive:true});
+  window.addEventListener('touchend', () => {
+    dragging = false;
+    thumb.classList.remove('dragging');
+  });
+
+  // Scroll wheel on widget
+  document.getElementById('zoom-widget').addEventListener('wheel', e => {
+    e.preventDefault();
+    setTargetZoom(targetZoom - Math.sign(e.deltaY) * 0.08);
+  }, {passive:false});
+})();
 
 // ══ INIT ══
 initStarfield();
-CW = Math.round(BASE_CW * getZoom());
-document.getElementById('canvas').style.width = CW + 'px';
-document.getElementById('ruler').style.width = CW + 'px';
-document.getElementById('connector-svg').style.width = CW + 'px';
-document.querySelectorAll('.era-tick-seg').forEach(s => s.style.width = (3000 * getZoom()) + 'px');
-document.querySelectorAll('.era-ruler-seg').forEach(s => s.style.width = (3000 * getZoom()) + 'px');
-document.querySelectorAll('.era-bg').forEach((s,i) => { s.style.width = (3000 * getZoom()) + 'px'; s.style.left = (i * 3000 * getZoom()) + 'px'; });
-document.getElementById('zoom-level').textContent = getZoom() + '×';
-document.getElementById('zoom-out').disabled = zoomIdx === 0;
-document.getElementById('zoom-in').disabled = zoomIdx === ZOOM_LEVELS.length - 1;
+applyZoomImmediate();   // sets CW, sizes canvas, positions slider
 renderRulerTicks();
 renderNodes();
 setTimeout(()=>{renderConnectors();updateScrubber();},120);
